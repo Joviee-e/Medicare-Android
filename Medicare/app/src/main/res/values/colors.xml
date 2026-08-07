@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#004d60</color>
+    <color name="primary_dark">#003745</color>
+    <color name="primary_container">#00677f</color>
+    <color name="background">#faf9fa</color>
+    <color name="white">#ffffff</color>
+    <color name="text_primary">#1a1c1d</color>
+    <color name="text_secondary">#3f484c</color>
+    <color name="status_taken">#3CB371</color>
+    <color name="status_scheduled">#1E88E5</color>
+    <color name="status_upcoming">#FB8C00</color>
+    <color name="status_missed">#ba1a1a</color>
+    <color name="emergency_bg">#ffdad6</color>
+    <color name="emergency_text">#93000a</color>
+    <color name="secondary_container">#cde7ed</color>
+    <color name="on_secondary_container">#50686d</color>
+    <color name="neutral_gray">#8e9192</color>
+    <color name="surface_variant">#e3e2e3</color>
+    <color name="surface_container">#eeeeee</color>
+    <color name="divider">#e0e0e0</color>
+</resources>
