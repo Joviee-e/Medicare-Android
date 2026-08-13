@@ -1,0 +1,109 @@
+package com.example.medicare
+
+import android.content.Intent
+import android.graphics.Typeface
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.RecyclerView
+
+class MedicineAdapter(private val items: MutableList<MedicineItem>) :
+    RecyclerView.Adapter<MedicineAdapter.ViewHolder>() {
+
+    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val strip: View = view.findViewById(R.id.view_status_strip)
+        val imgMedIcon: ImageView = view.findViewById(R.id.img_med_icon)
+        val iconBg: androidx.cardview.widget.CardView = view.findViewById(R.id.med_icon_bg)
+        val txtName: TextView = view.findViewById(R.id.txt_med_name)
+        val txtDose: TextView = view.findViewById(R.id.txt_med_dose)
+        val imgStatusSmall: ImageView = view.findViewById(R.id.img_status_small)
+        val txtStatusInfo: TextView = view.findViewById(R.id.txt_status_info)
+        val btnEdit: ImageView = view.findViewById(R.id.btn_edit)
+        val btnDelete: ImageView = view.findViewById(R.id.btn_delete)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_medicine, parent, false)
+        return ViewHolder(view)
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val item = items[position]
+        holder.txtName.text = item.name
+        holder.txtDose.text = item.dose
+        holder.txtStatusInfo.text = item.info
+
+        val context = holder.itemView.context
+
+        // Default alpha
+        holder.txtName.alpha = 1.0f
+        holder.txtDose.alpha = 1.0f
+
+        when (item.statusColor) {
+            "Teal" -> {
+                holder.strip.setBackgroundColor(ContextCompat.getColor(context, R.color.primary))
+                holder.iconBg.setCardBackgroundColor(ContextCompat.getColor(context, R.color.secondary_container))
+                holder.imgMedIcon.setColorFilter(ContextCompat.getColor(context, R.color.primary))
+                
+                holder.imgStatusSmall.setImageResource(R.drawable.ic_clock)
+                holder.imgStatusSmall.setColorFilter(ContextCompat.getColor(context, R.color.primary))
+                holder.txtStatusInfo.setTextColor(ContextCompat.getColor(context, R.color.primary))
+            }
+            "Red" -> {
+                holder.strip.setBackgroundColor(ContextCompat.getColor(context, R.color.status_missed))
+                holder.iconBg.setCardBackgroundColor(ContextCompat.getColor(context, R.color.secondary_container))
+                holder.imgMedIcon.setColorFilter(ContextCompat.getColor(context, R.color.primary))
+                
+                holder.imgStatusSmall.setImageResource(R.drawable.ic_warning)
+                holder.imgStatusSmall.setColorFilter(ContextCompat.getColor(context, R.color.status_missed))
+                holder.txtStatusInfo.setTextColor(ContextCompat.getColor(context, R.color.status_missed))
+            }
+            "Grey" -> {
+                holder.strip.setBackgroundColor(ContextCompat.getColor(context, R.color.neutral_gray))
+                holder.iconBg.setCardBackgroundColor(ContextCompat.getColor(context, R.color.surface_container))
+                holder.imgMedIcon.setColorFilter(ContextCompat.getColor(context, R.color.neutral_gray))
+                
+                holder.imgStatusSmall.setImageResource(R.drawable.ic_check_circle)
+                holder.imgStatusSmall.setColorFilter(ContextCompat.getColor(context, R.color.neutral_gray))
+                holder.txtStatusInfo.setTextColor(ContextCompat.getColor(context, R.color.text_secondary))
+                
+                // Dim the text to represent completed/taken today
+                holder.txtName.alpha = 0.5f
+                holder.txtDose.alpha = 0.5f
+            }
+        }
+
+        // Edit button click logic -> opens AddMedicineActivity with pre-fill extras
+        holder.btnEdit.setOnClickListener {
+            val intent = Intent(context, AddMedicineActivity::class.java).apply {
+                putExtra("med_name", item.name)
+                putExtra("med_dose", item.dose)
+                putExtra("med_info", item.info)
+            }
+            context.startActivity(intent)
+        }
+
+        // Delete button click logic -> confirmation Dialog and runtime list update
+        holder.btnDelete.setOnClickListener {
+            val pos = holder.adapterPosition
+            if (pos != RecyclerView.NO_POSITION) {
+                androidx.appcompat.app.AlertDialog.Builder(context)
+                    .setTitle("Delete this medicine?")
+                    .setMessage("Are you sure you want to delete ${items[pos].name}?")
+                    .setNegativeButton("Cancel", null)
+                    .setPositiveButton("Delete") { _, _ ->
+                        items.removeAt(pos)
+                        notifyItemRemoved(pos)
+                        notifyItemRangeChanged(pos, itemCount)
+                    }
+                    .show()
+            }
+        }
+    }
+
+    override fun getItemCount() = items.size
+}

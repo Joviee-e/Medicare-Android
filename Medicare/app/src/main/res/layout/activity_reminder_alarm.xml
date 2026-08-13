@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <!-- Top primary teal colored thick strip bar -->
+    <View
+        android:id="@+id/top_color_bar"
+        android:layout_width="match_parent"
+        android:layout_height="12dp"
+        android:background="@color/primary"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"/>
+
+    <!-- Alarm Title Header -->
+    <TextView
+        android:id="@+id/txt_alarm_header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TIME TO TAKE YOUR MEDICINE"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_secondary"
+        android:letterSpacing="0.15"
+        android:layout_marginTop="32dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/top_color_bar"/>
+
+    <!-- Large illustration circle in center with 'Now' badge -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layout_alarm_circle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="40dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/txt_alarm_header">
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/main_circle"
+            android:layout_width="140dp"
+            android:layout_height="140dp"
+            app:cardCornerRadius="70dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="@color/secondary_container"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <!-- Now badge overlapping at bottom-right of the circle -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="100dp"
+            app:cardElevation="2dp"
+            app:strokeColor="#FFCDD2"
+            app:strokeWidth="1dp"
+            app:cardBackgroundColor="@color/white"
+            app:layout_constraintBottom_toBottomOf="@id/main_circle"
+            app:layout_constraintRight_toRightOf="@id/main_circle"
+            android:layout_marginBottom="4dp"
+            android:layout_marginEnd="4dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp">
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:src="@drawable/ic_clock"
+                    app:tint="@color/status_missed"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Now"
+                    android:textColor="@color/status_missed"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:layout_marginStart="4dp"/>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Medicine Title Info -->
+    <TextView
+        android:id="@+id/txt_alarm_med_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Insulin\nGlargine"
+        android:textSize="36sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_primary"
+        android:gravity="center"
+        android:lineSpacingMultiplier="1.1"
+        android:layout_marginTop="32dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        app:layout_constraintTop_toBottomOf="@id/layout_alarm_circle"/>
+
+    <TextView
+        android:id="@+id/txt_alarm_med_dose"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="20 Units"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/primary"
+        android:gravity="center"
+        android:layout_marginTop="12dp"
+        app:layout_constraintTop_toBottomOf="@id/txt_alarm_med_name"/>
+
+    <!-- Instructions row -->
+    <LinearLayout
+        android:id="@+id/layout_alarm_instruction"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="12dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/txt_alarm_med_dose">
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_restaurant"
+            app:tint="@color/text_secondary"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Take with food"
+            android:textColor="@color/text_secondary"
+            android:textSize="15sp"
+            android:layout_marginStart="8dp"/>
+    </LinearLayout>
+
+    <!-- Action Buttons container stacked vertically -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:layout_marginBottom="40dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <!-- Mark as Taken -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_mark_taken"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Mark as Taken"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            app:icon="@drawable/ic_check_circle"
+            app:iconTint="@color/white"
+            app:iconSize="20dp"
+            app:iconGravity="textStart"
+            android:backgroundTint="@color/primary"
+            app:cornerRadius="12dp"/>
+
+        <!-- Snooze for 15m -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_snooze"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="12dp"
+            android:text="Snooze for 15m"
+            android:textColor="@color/text_secondary"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            app:icon="@drawable/ic_snooze"
+            app:iconTint="@color/text_secondary"
+            app:iconSize="20dp"
+            app:iconGravity="textStart"
+            android:backgroundTint="@color/secondary_container"
+            app:cornerRadius="12dp"/>
+
+        <!-- Skip Dose (Pink background with red border) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_skip_dose"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="12dp"
+            android:text="Skip Dose"
+            android:textColor="@color/status_missed"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            app:icon="@drawable/ic_close_circle"
+            app:iconTint="@color/status_missed"
+            app:iconSize="20dp"
+            app:iconGravity="textStart"
+            android:backgroundTint="@color/emergency_bg"
+            app:strokeColor="@color/status_missed"
+            app:strokeWidth="1dp"
+            app:cornerRadius="12dp"/>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
