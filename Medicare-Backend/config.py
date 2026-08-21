@@ -28,6 +28,9 @@ class Config:
         # JWT security configuration
         cls.JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'default-secure-jwt-key-change-me')
 
+        # Google OAuth configuration
+        cls.GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '')
+
         # Flask runtime configuration
         cls.PORT = int(os.getenv('PORT', 5000))
         cls.FLASK_ENV = os.getenv('FLASK_ENV', 'development')

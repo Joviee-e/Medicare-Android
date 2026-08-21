@@ -1,99 +1,316 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="20dp">
+    android:layout_height="wrap_content">
 
-    <!-- Name Field -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="FULL NAME"
-        android:textSize="11sp"
-        android:textStyle="bold"
-        android:textColor="@color/text_secondary"
-        android:letterSpacing="0.1" />
-
-    <EditText
-        android:id="@+id/edit_name"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginTop="6dp"
-        android:background="@drawable/bg_input_selector"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:textSize="15sp"
-        android:inputType="textPersonName"
-        android:maxLines="1" />
-
-    <!-- Blood Group Field -->
-    <TextView
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="BLOOD GROUP"
-        android:textSize="11sp"
-        android:textStyle="bold"
-        android:textColor="@color/text_secondary"
-        android:letterSpacing="0.1"
-        android:layout_marginTop="16dp" />
+        android:orientation="vertical"
+        android:padding="20dp">
 
-    <EditText
-        android:id="@+id/edit_blood"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginTop="6dp"
-        android:background="@drawable/bg_input_selector"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:textSize="15sp"
-        android:inputType="text"
-        android:maxLines="1" />
+        <!-- Name Field -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="FULL NAME"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_secondary"
+            android:letterSpacing="0.1" />
 
-    <!-- Emergency Contact Name Field -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="EMERGENCY CONTACT NAME"
-        android:textSize="11sp"
-        android:textStyle="bold"
-        android:textColor="@color/text_secondary"
-        android:letterSpacing="0.1"
-        android:layout_marginTop="16dp" />
+        <EditText
+            android:id="@+id/edit_name"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_input_selector"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textSize="15sp"
+            android:inputType="textPersonName"
+            android:maxLines="1" />
 
-    <EditText
-        android:id="@+id/edit_emerg_name"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginTop="6dp"
-        android:background="@drawable/bg_input_selector"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:textSize="15sp"
-        android:inputType="textPersonName"
-        android:maxLines="1" />
+        <!-- Phone Field -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="PHONE NUMBER"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_secondary"
+            android:letterSpacing="0.1"
+            android:layout_marginTop="16dp" />
 
-    <!-- Emergency Contact Phone Field -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="EMERGENCY CONTACT PHONE"
-        android:textSize="11sp"
-        android:textStyle="bold"
-        android:textColor="@color/text_secondary"
-        android:letterSpacing="0.1"
-        android:layout_marginTop="16dp" />
+        <EditText
+            android:id="@+id/edit_phone"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_input_selector"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textSize="15sp"
+            android:inputType="phone"
+            android:maxLines="1" />
 
-    <EditText
-        android:id="@+id/edit_emerg_phone"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginTop="6dp"
-        android:background="@drawable/bg_input_selector"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:textSize="15sp"
-        android:inputType="phone"
-        android:maxLines="1" />
+        <!-- Date of Birth Field -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="DATE OF BIRTH (DD-MM-YYYY)"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_secondary"
+            android:letterSpacing="0.1"
+            android:layout_marginTop="16dp" />
 
-</LinearLayout>
+        <EditText
+            android:id="@+id/edit_dob"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_input_selector"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textSize="15sp"
+            android:focusable="false"
+            android:clickable="true" />
+
+        <!-- Age Field -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="AGE"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_secondary"
+            android:letterSpacing="0.1"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/edit_age"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_input_selector"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textSize="15sp"
+            android:inputType="number"
+            android:maxLines="1" />
+
+        <!-- Gender Field -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="GENDER"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_secondary"
+            android:letterSpacing="0.1"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/edit_gender"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_input_selector"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textSize="15sp"
+            android:hint="e.g. Male, Female, Other"
+            android:maxLines="1" />
+
+        <!-- Blood Group Field -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="BLOOD GROUP"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_secondary"
+            android:letterSpacing="0.1"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/edit_blood"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_input_selector"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textSize="15sp"
+            android:maxLines="1" />
+
+        <!-- Address Field -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="RESIDENTIAL ADDRESS"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_secondary"
+            android:letterSpacing="0.1"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/edit_address"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="60dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_input_selector"
+            android:padding="12dp"
+            android:gravity="top|start"
+            android:inputType="textMultiLine"
+            android:textSize="15sp" />
+
+        <!-- Allergies Field -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ALLERGIES"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_secondary"
+            android:letterSpacing="0.1"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/edit_allergies"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="60dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_input_selector"
+            android:padding="12dp"
+            android:gravity="top|start"
+            android:inputType="textMultiLine"
+            android:textSize="15sp" />
+
+        <!-- Existing Conditions Field -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="EXISTING CONDITIONS"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_secondary"
+            android:letterSpacing="0.1"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/edit_conditions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="60dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_input_selector"
+            android:padding="12dp"
+            android:gravity="top|start"
+            android:inputType="textMultiLine"
+            android:textSize="15sp" />
+
+        <!-- Medications Field -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CURRENT MEDICATIONS"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_secondary"
+            android:letterSpacing="0.1"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/edit_medications"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="60dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_input_selector"
+            android:padding="12dp"
+            android:gravity="top|start"
+            android:inputType="textMultiLine"
+            android:textSize="15sp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/divider"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="20dp"/>
+
+        <!-- Emergency Contact Name Field -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="EMERGENCY CONTACT NAME"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_secondary"
+            android:letterSpacing="0.1" />
+
+        <EditText
+            android:id="@+id/edit_emerg_name"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_input_selector"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textSize="15sp"
+            android:inputType="textPersonName"
+            android:maxLines="1" />
+
+        <!-- Relationship Field -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="RELATIONSHIP"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_secondary"
+            android:letterSpacing="0.1"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/edit_emerg_relationship"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_input_selector"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textSize="15sp"
+            android:hint="e.g. Spouse, Parent, Friend"
+            android:maxLines="1" />
+
+        <!-- Emergency Contact Phone Field -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="EMERGENCY CONTACT PHONE"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_secondary"
+            android:letterSpacing="0.1"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/edit_emerg_phone"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_input_selector"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textSize="15sp"
+            android:inputType="phone"
+            android:maxLines="1" />
+
+    </LinearLayout>
+</ScrollView>

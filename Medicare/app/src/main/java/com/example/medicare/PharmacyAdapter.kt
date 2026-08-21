@@ -4,11 +4,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 
-class PharmacyAdapter(private val items: List<PharmacyItem>) :
-    RecyclerView.Adapter<PharmacyAdapter.ViewHolder>() {
+class PharmacyAdapter(
+    private val items: List<PharmacyItem>,
+    private val onItemClick: (PharmacyItem) -> Unit,
+    private val onNavigateClick: (PharmacyItem) -> Unit,
+    private val onCallClick: (PharmacyItem) -> Unit
+) : RecyclerView.Adapter<PharmacyAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val txtName: TextView = view.findViewById(R.id.txt_pharmacy_name)
@@ -30,25 +33,23 @@ class PharmacyAdapter(private val items: List<PharmacyItem>) :
         holder.txtRating.text = item.rating
         holder.txtDetails.text = item.details
 
-        val context = holder.itemView.context
+        // Show/hide call button based on phone availability
+        if (item.phoneNumber.isNullOrEmpty()) {
+            holder.btnCall.visibility = View.GONE
+        } else {
+            holder.btnCall.visibility = View.VISIBLE
+        }
 
-        // Card click details dialog
         holder.itemView.setOnClickListener {
-            androidx.appcompat.app.AlertDialog.Builder(context)
-                .setTitle(item.name)
-                .setMessage("Rating: ${item.rating} Stars\nDistance: ${item.details}\nHours: Open Daily 08:00 AM - 10:00 PM")
-                .setPositiveButton("Close", null)
-                .show()
+            onItemClick(item)
         }
 
-        // Navigate button click action
         holder.btnNavigate.setOnClickListener {
-            Toast.makeText(context, "Navigation feature coming soon", Toast.LENGTH_SHORT).show()
+            onNavigateClick(item)
         }
 
-        // Call button click action
         holder.btnCall.setOnClickListener {
-            Toast.makeText(context, "Calling pharmacy...", Toast.LENGTH_SHORT).show()
+            onCallClick(item)
         }
     }
 

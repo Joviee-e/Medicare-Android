@@ -21,6 +21,21 @@ data class LoginRequest(
     val password: String
 )
 
+data class GoogleLoginRequest(
+    @SerializedName("id_token") val idToken: String,
+    val role: String = "patient"
+)
+
+data class ForgotPasswordRequest(
+    val email: String
+)
+
+data class ResetPasswordRequest(
+    val email: String,
+    val code: String,
+    @SerializedName("new_password") val newPassword: String
+)
+
 data class AuthResponse(
     val success: Boolean,
     val message: String?,
@@ -28,7 +43,8 @@ data class AuthResponse(
     @SerializedName("refresh_token") val refreshToken: String?,
     val role: String?,
     @SerializedName("user_id") val userId: String?,
-    val name: String?
+    val name: String?,
+    @SerializedName("onboarding_status") val onboardingStatus: String?
 )
 
 // Profile DTOs
@@ -39,12 +55,33 @@ data class AccessibilitySettings(
     @SerializedName("font_size") val fontSize: Int
 )
 
+data class EmergencyContact(
+    val name: String,
+    val relationship: String,
+    val phone: String
+)
+
+data class MedicalInformation(
+    val allergies: String,
+    val conditions: String,
+    val medications: String
+)
+
 data class PatientProfile(
     @SerializedName("_id") val id: String,
     val name: String,
     @SerializedName("blood_group") val bloodGroup: String?,
     @SerializedName("emergency_contact_name") val emergencyContactName: String?,
     @SerializedName("emergency_contact_phone") val emergencyContactPhone: String?,
+    @SerializedName("emergency_contacts") val emergencyContacts: List<EmergencyContact>?,
+    @SerializedName("date_of_birth") val dateOfBirth: String?,
+    val age: String?,
+    val gender: String?,
+    val phone: String?,
+    val address: String?,
+    @SerializedName("medical_information") val medicalInformation: MedicalInformation?,
+    @SerializedName("onboarding_status") val onboardingStatus: String?,
+    @SerializedName("completion_percentage") val completionPercentage: Int?,
     @SerializedName("accessibility_settings") val accessibilitySettings: AccessibilitySettings?
 )
 
@@ -56,8 +93,14 @@ data class ProfileResponse(
 data class UpdateProfileRequest(
     val name: String,
     @SerializedName("blood_group") val bloodGroup: String,
-    @SerializedName("emergency_contact_name") val emergencyContactName: String,
-    @SerializedName("emergency_contact_phone") val emergencyContactPhone: String,
+    @SerializedName("emergency_contacts") val emergencyContacts: List<EmergencyContact>,
+    @SerializedName("date_of_birth") val dateOfBirth: String,
+    val age: String,
+    val gender: String,
+    val phone: String,
+    val address: String,
+    @SerializedName("medical_information") val medicalInformation: MedicalInformation,
+    @SerializedName("onboarding_status") val onboardingStatus: String,
     @SerializedName("accessibility_settings") val accessibilitySettings: AccessibilitySettings
 )
 

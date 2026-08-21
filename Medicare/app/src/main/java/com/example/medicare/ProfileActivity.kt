@@ -1,5 +1,6 @@
 package com.example.medicare
 
+import android.app.DatePickerDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -13,6 +14,7 @@ import com.example.medicare.api.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.util.*
 
 class ProfileActivity : AppCompatActivity() {
 
@@ -24,10 +26,17 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var txtEmergName: TextView
     private lateinit var txtEmergPhone: TextView
 
+    // New profile completion views
+    private lateinit var txtCompletionPercent: TextView
+    private lateinit var progressCompletion: ProgressBar
+
     private lateinit var switchContrast: SwitchCompat
     private lateinit var switchVoice: SwitchCompat
     private lateinit var switchHaptic: SwitchCompat
     private lateinit var seekbarFont: SeekBar
+
+    // Keep memory cache of fetched patient profile details
+    private var cachedProfile: PatientProfile? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,6 +51,9 @@ class ProfileActivity : AppCompatActivity() {
         txtBlood = findViewById(R.id.txt_blood_group)
         txtEmergName = findViewById(R.id.txt_emergency_name)
         txtEmergPhone = findViewById(R.id.txt_emergency_phone)
+
+        txtCompletionPercent = findViewById(R.id.txt_completion_percentage)
+        progressCompletion = findViewById(R.id.progress_completion)
 
         switchContrast = findViewById(R.id.switch_contrast)
         switchVoice = findViewById(R.id.switch_voice)
@@ -98,15 +110,27 @@ class ProfileActivity : AppCompatActivity() {
                     val body = response.body()
                     if (response.isSuccessful && body != null && body.success && body.profile != null) {
                         val profile = body.profile
+                        cachedProfile = profile
+                        
                         txtName.text = profile.name
                         txtEmail.text = sessionManager.getUserEmail() ?: "No email"
-                        txtPhone.text = profile.emergencyContactPhone ?: "(Not Specified)" // Maps emergency phone or custom phone
+                        
+                        // Map primary emergency contact phone or phone field
+                        txtPhone.text = if (!profile.phone.isNullOrEmpty()) profile.phone else "(Not Specified)"
                         txtBlood.text = profile.bloodGroup ?: "O+"
-                        txtEmergName.text = profile.emergencyContactName ?: "Not Specified"
-                        txtEmergPhone.text = profile.emergencyContactPhone ?: "Not Specified"
+                        
+                        val primaryContact = profile.emergencyContacts?.firstOrNull()
+                        txtEmergName.text = primaryContact?.name ?: profile.emergencyContactName ?: "Not Specified"
+                        txtEmergPhone.text = primaryContact?.phone ?: profile.emergencyContactPhone ?: "Not Specified"
 
-                        // Sync sessionManager name
+                        // Render profile completion percentage from backend source of truth
+                        val completion = profile.completionPercentage ?: 0
+                        txtCompletionPercent.text = "$completion%"
+                        progressCompletion.progress = completion
+
+                        // Sync sessionManager
                         sessionManager.saveUserName(profile.name)
+                        sessionManager.saveOnboardingStatus(profile.onboardingStatus ?: "COMPLETED")
 
                         // Accessibility Bindings
                         profile.accessibilitySettings?.let { settings ->
@@ -127,15 +151,51 @@ class ProfileActivity : AppCompatActivity() {
     private fun showEditProfileDialog() {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_edit_profile, null)
         val editName = dialogView.findViewById<EditText>(R.id.edit_name)
+        val editPhone = dialogView.findViewById<EditText>(R.id.edit_phone)
+        val editDob = dialogView.findViewById<EditText>(R.id.edit_dob)
+        val editAge = dialogView.findViewById<EditText>(R.id.edit_age)
+        val editGender = dialogView.findViewById<EditText>(R.id.edit_gender)
         val editBlood = dialogView.findViewById<EditText>(R.id.edit_blood)
+        val editAddress = dialogView.findViewById<EditText>(R.id.edit_address)
+        val editAllergies = dialogView.findViewById<EditText>(R.id.edit_allergies)
+        val editConditions = dialogView.findViewById<EditText>(R.id.edit_conditions)
+        val editMedications = dialogView.findViewById<EditText>(R.id.edit_medications)
+        
         val editEmergName = dialogView.findViewById<EditText>(R.id.edit_emerg_name)
+        val editEmergRel = dialogView.findViewById<EditText>(R.id.edit_emerg_relationship)
         val editEmergPhone = dialogView.findViewById<EditText>(R.id.edit_emerg_phone)
 
-        // Pre-fill values
-        editName.setText(txtName.text)
-        editBlood.setText(txtBlood.text)
-        editEmergName.setText(txtEmergName.text)
-        editEmergPhone.setText(txtEmergPhone.text)
+        // Pre-fill values from cache
+        cachedProfile?.let { profile ->
+            editName.setText(profile.name)
+            editPhone.setText(profile.phone ?: "")
+            editDob.setText(profile.dateOfBirth ?: "")
+            editAge.setText(profile.age ?: "")
+            editGender.setText(profile.gender ?: "")
+            editBlood.setText(profile.bloodGroup ?: "")
+            editAddress.setText(profile.address ?: "")
+            editAllergies.setText(profile.medicalInformation?.allergies ?: "")
+            editConditions.setText(profile.medicalInformation?.conditions ?: "")
+            editMedications.setText(profile.medicalInformation?.medications ?: "")
+
+            val contact = profile.emergencyContacts?.firstOrNull()
+            editEmergName.setText(contact?.name ?: profile.emergencyContactName ?: "")
+            editEmergRel.setText(contact?.relationship ?: "Family")
+            editEmergPhone.setText(contact?.phone ?: profile.emergencyContactPhone ?: "")
+        }
+
+        // Set DatePicker for DOB in dialog
+        editDob.setOnClickListener {
+            val calendar = Calendar.getInstance()
+            val year = calendar.get(Calendar.YEAR)
+            val month = calendar.get(Calendar.MONTH)
+            val day = calendar.get(Calendar.DAY_OF_MONTH)
+
+            DatePickerDialog(this, { _, selectedYear, selectedMonth, selectedDay ->
+                val dobStr = String.format("%02d-%02d-%d", selectedDay, selectedMonth + 1, selectedYear)
+                editDob.setText(dobStr)
+            }, year, month, day).show()
+        }
 
         AlertDialog.Builder(this)
             .setTitle("Edit Profile")
@@ -143,8 +203,18 @@ class ProfileActivity : AppCompatActivity() {
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Save") { _, _ ->
                 val newName = editName.text.toString().trim()
+                val newPhone = editPhone.text.toString().trim()
+                val newDob = editDob.text.toString().trim()
+                val newAge = editAge.text.toString().trim()
+                val newGender = editGender.text.toString().trim()
                 val newBlood = editBlood.text.toString().trim()
+                val newAddress = editAddress.text.toString().trim()
+                val newAllergies = editAllergies.text.toString().trim()
+                val newConditions = editConditions.text.toString().trim()
+                val newMedications = editMedications.text.toString().trim()
+                
                 val newEmergName = editEmergName.text.toString().trim()
+                val newEmergRel = editEmergRel.text.toString().trim()
                 val newEmergPhone = editEmergPhone.text.toString().trim()
 
                 if (newName.isEmpty()) {
@@ -159,11 +229,27 @@ class ProfileActivity : AppCompatActivity() {
                     fontSize = seekbarFont.progress
                 )
 
+                val contacts = mutableListOf<EmergencyContact>()
+                if (newEmergName.isNotEmpty() || newEmergPhone.isNotEmpty()) {
+                    contacts.add(EmergencyContact(newEmergName, newEmergRel, newEmergPhone))
+                }
+
+                // If user updates skipped sections, the onboarding state updates to COMPLETED if fully filled,
+                // or remains COMPLETED/SKIPPED depending on current settings. If onboarding status was SKIPPED,
+                // keep it or promote to COMPLETED if completion percentage becomes 100%. To be safe, keep existing.
+                val existingStatus = cachedProfile?.onboardingStatus ?: "COMPLETED"
+
                 val request = UpdateProfileRequest(
                     name = newName,
                     bloodGroup = newBlood,
-                    emergencyContactName = newEmergName,
-                    emergencyContactPhone = newEmergPhone,
+                    emergencyContacts = contacts,
+                    dateOfBirth = newDob,
+                    age = newAge,
+                    gender = newGender,
+                    phone = newPhone,
+                    address = newAddress,
+                    medicalInformation = MedicalInformation(newAllergies, newConditions, newMedications),
+                    onboardingStatus = existingStatus,
                     accessibilitySettings = settings
                 )
 
@@ -203,6 +289,7 @@ class ProfileActivity : AppCompatActivity() {
     }
 
     private fun syncAccessibility() {
+        val profile = cachedProfile ?: return
         val settings = AccessibilitySettings(
             contrastMode = switchContrast.isChecked,
             voiceInput = switchVoice.isChecked,
@@ -211,10 +298,20 @@ class ProfileActivity : AppCompatActivity() {
         )
 
         val request = UpdateProfileRequest(
-            name = txtName.text.toString(),
-            bloodGroup = txtBlood.text.toString(),
-            emergencyContactName = txtEmergName.text.toString(),
-            emergencyContactPhone = txtEmergPhone.text.toString(),
+            name = profile.name,
+            bloodGroup = profile.bloodGroup ?: "O+",
+            emergencyContacts = profile.emergencyContacts ?: emptyList(),
+            dateOfBirth = profile.dateOfBirth ?: "",
+            age = profile.age ?: "",
+            gender = profile.gender ?: "",
+            phone = profile.phone ?: "",
+            address = profile.address ?: "",
+            medicalInformation = MedicalInformation(
+                profile.medicalInformation?.allergies ?: "",
+                profile.medicalInformation?.conditions ?: "",
+                profile.medicalInformation?.medications ?: ""
+            ),
+            onboardingStatus = profile.onboardingStatus ?: "COMPLETED",
             accessibilitySettings = settings
         )
 

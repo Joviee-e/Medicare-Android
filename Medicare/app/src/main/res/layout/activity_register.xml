@@ -36,7 +36,7 @@
                 android:textSize="26sp"
                 android:textStyle="bold"
                 android:textColor="@color/text_primary"
-                android:layout_marginTop="32dp"
+                android:layout_marginTop="24dp"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/btn_back_to_login" />
 
@@ -61,7 +61,7 @@
                 android:textStyle="bold"
                 android:textColor="@color/text_secondary"
                 android:letterSpacing="0.1"
-                android:layout_marginTop="28dp"
+                android:layout_marginTop="24dp"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/txt_register_subtitle" />
 
@@ -91,7 +91,7 @@
                 android:textStyle="bold"
                 android:textColor="@color/text_secondary"
                 android:letterSpacing="0.1"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="16dp"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/input_register_name" />
 
@@ -121,39 +121,98 @@
                 android:textStyle="bold"
                 android:textColor="@color/text_secondary"
                 android:letterSpacing="0.1"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="16dp"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/input_register_email" />
 
-            <EditText
-                android:id="@+id/input_register_password"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_register_password"
                 android:layout_width="match_parent"
-                android:layout_height="54dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:hint="create a secure password"
-                android:textColorHint="@color/neutral_gray"
-                android:textColor="@color/text_primary"
-                android:background="@drawable/bg_input_selector"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:textSize="15sp"
-                android:inputType="textPassword"
-                android:maxLines="1"
-                app:layout_constraintTop_toBottomOf="@id/lbl_register_password" />
+                app:hintEnabled="false"
+                app:passwordToggleEnabled="true"
+                app:passwordToggleTint="@color/primary"
+                app:layout_constraintTop_toBottomOf="@id/lbl_register_password">
+
+                <EditText
+                    android:id="@+id/input_register_password"
+                    android:layout_width="match_parent"
+                    android:layout_height="54dp"
+                    android:hint="create a secure password"
+                    android:textColorHint="@color/neutral_gray"
+                    android:textColor="@color/text_primary"
+                    android:background="@drawable/bg_input_selector"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="48dp"
+                    android:textSize="15sp"
+                    android:inputType="textPassword"
+                    android:maxLines="1" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Confirm Password Input Group -->
+            <TextView
+                android:id="@+id/lbl_register_confirm_password"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CONFIRM PASSWORD"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_secondary"
+                android:letterSpacing="0.1"
+                android:layout_marginTop="16dp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/layout_register_password" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_register_confirm_password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:hintEnabled="false"
+                app:passwordToggleEnabled="true"
+                app:passwordToggleTint="@color/primary"
+                app:layout_constraintTop_toBottomOf="@id/lbl_register_confirm_password">
+
+                <EditText
+                    android:id="@+id/input_register_confirm_password"
+                    android:layout_width="match_parent"
+                    android:layout_height="54dp"
+                    android:hint="re-enter your password"
+                    android:textColorHint="@color/neutral_gray"
+                    android:textColor="@color/text_primary"
+                    android:background="@drawable/bg_input_selector"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="48dp"
+                    android:textSize="15sp"
+                    android:inputType="textPassword"
+                    android:maxLines="1" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Terms Checkbox -->
+            <CheckBox
+                android:id="@+id/checkbox_terms"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="I agree to the Terms of Service &amp; Privacy Policy"
+                android:textSize="13sp"
+                android:textColor="@color/text_secondary"
+                app:layout_constraintTop_toBottomOf="@id/layout_register_confirm_password" />
 
             <!-- Submit Button -->
             <Button
                 android:id="@+id/btn_register_submit"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
-                android:layout_marginTop="32dp"
+                android:layout_marginTop="24dp"
                 android:text="Sign Up"
                 android:textColor="@color/white"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 app:backgroundTint="@color/primary"
                 app:cornerRadius="8dp"
-                app:layout_constraintTop_toBottomOf="@id/input_register_password" />
+                app:layout_constraintTop_toBottomOf="@id/checkbox_terms" />
 
             <!-- Go to Login Link -->
             <TextView
@@ -164,11 +223,22 @@
                 android:textSize="14sp"
                 android:textColor="@color/primary"
                 android:textStyle="bold"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="20dp"
                 android:padding="8dp"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/btn_register_submit" />
+
+            <ProgressBar
+                android:id="@+id/progress_register"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:indeterminateTint="@color/primary"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>
