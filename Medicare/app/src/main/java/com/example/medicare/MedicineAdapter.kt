@@ -1,14 +1,19 @@
 package com.example.medicare
 
 import android.content.Intent
-import android.graphics.Typeface
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.example.medicare.api.BaseResponse
+import com.example.medicare.api.RetrofitClient
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class MedicineAdapter(private val items: MutableList<MedicineItem>) :
     RecyclerView.Adapter<MedicineAdapter.ViewHolder>() {
@@ -71,7 +76,7 @@ class MedicineAdapter(private val items: MutableList<MedicineItem>) :
                 holder.imgStatusSmall.setColorFilter(ContextCompat.getColor(context, R.color.neutral_gray))
                 holder.txtStatusInfo.setTextColor(ContextCompat.getColor(context, R.color.text_secondary))
                 
-                // Dim the text to represent completed/taken today
+                // Dim text for taken medications
                 holder.txtName.alpha = 0.5f
                 holder.txtDose.alpha = 0.5f
             }
@@ -80,6 +85,7 @@ class MedicineAdapter(private val items: MutableList<MedicineItem>) :
         // Edit button click logic -> opens AddMedicineActivity with pre-fill extras
         holder.btnEdit.setOnClickListener {
             val intent = Intent(context, AddMedicineActivity::class.java).apply {
+                putExtra("med_id", item.id)
                 putExtra("med_name", item.name)
                 putExtra("med_dose", item.dose)
                 putExtra("med_info", item.info)
@@ -96,9 +102,25 @@ class MedicineAdapter(private val items: MutableList<MedicineItem>) :
                     .setMessage("Are you sure you want to delete ${items[pos].name}?")
                     .setNegativeButton("Cancel", null)
                     .setPositiveButton("Delete") { _, _ ->
-                        items.removeAt(pos)
-                        notifyItemRemoved(pos)
-                        notifyItemRangeChanged(pos, itemCount)
+                        val medId = items[pos].id
+                        RetrofitClient.getApiService(context).deleteMedicine(medId)
+                            .enqueue(object : Callback<BaseResponse> {
+                                override fun onResponse(call: Call<BaseResponse>, response: Response<BaseResponse>) {
+                                    if (response.isSuccessful && response.body()?.success == true) {
+                                        Toast.makeText(context, "Medicine deleted", Toast.LENGTH_SHORT).show()
+                                        items.removeAt(pos)
+                                        notifyItemRemoved(pos)
+                                        notifyItemRangeChanged(pos, itemCount)
+                                    } else {
+                                        val errMsg = RetrofitClient.parseErrorMessage(response)
+                                        Toast.makeText(context, errMsg, Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+
+                                override fun onFailure(call: Call<BaseResponse>, t: Throwable) {
+                                    Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show()
+                                }
+                            })
                     }
                     .show()
             }

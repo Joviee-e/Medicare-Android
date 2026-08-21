@@ -167,6 +167,7 @@
                             android:src="@drawable/ic_mail"/>
 
                         <TextView
+                            android:id="@+id/txt_user_email"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="eleanor.vance@example.com"
@@ -192,6 +193,7 @@
                             android:src="@drawable/ic_phone"/>
 
                         <TextView
+                            android:id="@+id/txt_user_phone"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="(555) 123-4567"
@@ -232,6 +234,7 @@
                         android:letterSpacing="0.1"/>
 
                     <TextView
+                        android:id="@+id/txt_blood_group"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="O+"
@@ -438,6 +441,7 @@
                             android:textColor="@color/text_secondary"
                             android:textStyle="bold"/>
                         <SeekBar
+                            android:id="@+id/seekbar_font_size"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
@@ -490,6 +494,7 @@
                         </LinearLayout>
 
                         <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/switch_contrast"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:checked="false"
@@ -533,6 +538,7 @@
                         </LinearLayout>
 
                         <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/switch_voice"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:checked="true"
@@ -621,6 +627,7 @@
                         </LinearLayout>
 
                         <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/switch_haptic"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:checked="true"

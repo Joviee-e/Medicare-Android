@@ -26,6 +26,12 @@ class CircularProgressView @JvmOverloads constructor(
     }
 
     private val rect = RectF()
+    private var progressValue = 0.0f
+
+    fun setProgress(progress: Float) {
+        progressValue = progress.coerceIn(0.0f, 1.0f)
+        invalidate()
+    }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -38,8 +44,8 @@ class CircularProgressView @JvmOverloads constructor(
         // Draw background arc
         canvas.drawArc(rect, 0f, 360f, false, bgPaint)
         
-        // Draw progress arc (75% for 3/4 Taken)
-        // Starts at top (-90 degrees) and goes clockwise 270 degrees
-        canvas.drawArc(rect, -90f, 270f, false, progressPaint)
+        // Draw progress arc
+        val sweepAngle = progressValue * 360f
+        canvas.drawArc(rect, -90f, sweepAngle, false, progressPaint)
     }
 }

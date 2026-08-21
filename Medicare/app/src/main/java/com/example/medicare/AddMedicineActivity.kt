@@ -2,91 +2,113 @@ package com.example.medicare
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
-import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.medicare.api.BaseResponse
+import com.example.medicare.api.MedicineRequest
+import com.example.medicare.api.MedicineResponse
+import com.example.medicare.api.RetrofitClient
 import com.google.android.material.card.MaterialCardView
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class AddMedicineActivity : AppCompatActivity() {
 
     private val remindersList = mutableListOf<String>()
     private lateinit var reminderAdapter: ReminderAdapter
+    
+    private var selectedType = "tablet"
+    private var selectedFrequency = "daily"
+    private var medId: String? = null // Null if creating, set if editing
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_medicine)
 
-        // Setup bottom navigation tab active showcase representation
-        NavigationHelper.setupNavigation(this, R.id.tab_medicines)
+        sessionManager = SessionManager(this)
 
         val inputName = findViewById<EditText>(R.id.input_med_name)
         val inputDosage = findViewById<EditText>(R.id.input_dosage_value)
+        val txtStartDate = findViewById<TextView>(R.id.txt_start_date)
+        val txtEndDate = findViewById<TextView>(R.id.txt_end_date)
 
         // Setup Reminders RecyclerView
         val recyclerReminders = findViewById<RecyclerView>(R.id.recycler_reminders)
         recyclerReminders.layoutManager = LinearLayoutManager(this)
-        remindersList.addAll(listOf("08:00 AM", "08:00 PM"))
         reminderAdapter = ReminderAdapter(remindersList)
         recyclerReminders.adapter = reminderAdapter
 
-        // Pre-fill fields if Extras are passed (from editing logic)
+        // Pre-set default dates (today)
+        val todayStr = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(Date())
+        txtStartDate.text = todayStr
+        txtEndDate.text = todayStr
+
+        // Extract extras if editing
+        medId = intent.getStringExtra("med_id")
         val editName = intent.getStringExtra("med_name")
         val editDose = intent.getStringExtra("med_dose")
-        if (editName != null) {
-            inputName.setText(editName)
+        
+        if (medId != null) {
             findViewById<TextView>(R.id.txt_title)?.text = "Edit Medicine"
-        }
-        if (editDose != null) {
-            // Strip out non-numeric characters for dosage value input
-            val numericDose = editDose.takeWhile { it.isDigit() }
-            inputDosage.setText(numericDose.ifEmpty { editDose })
+            if (editName != null) {
+                inputName.setText(editName)
+            }
+            if (editDose != null) {
+                // Strip out non-numeric characters for dosage input
+                val numericDose = editDose.takeWhile { it.isDigit() }
+                inputDosage.setText(numericDose.ifEmpty { editDose })
+            }
         }
 
         // Setup Medicine Type Card Single-Selects
         findViewById<MaterialCardView>(R.id.card_type_tablet)?.setOnClickListener {
+            selectedType = "tablet"
             updateTypeSelection(R.id.card_type_tablet)
         }
         findViewById<MaterialCardView>(R.id.card_type_capsule)?.setOnClickListener {
+            selectedType = "capsule"
             updateTypeSelection(R.id.card_type_capsule)
         }
         findViewById<MaterialCardView>(R.id.card_type_syrup)?.setOnClickListener {
+            selectedType = "syrup"
             updateTypeSelection(R.id.card_type_syrup)
         }
         findViewById<MaterialCardView>(R.id.card_type_injection)?.setOnClickListener {
+            selectedType = "injection"
             updateTypeSelection(R.id.card_type_injection)
         }
 
         // Setup Frequency Chip Single-Selects
         findViewById<TextView>(R.id.chip_freq_daily)?.setOnClickListener {
+            selectedFrequency = "daily"
             updateFrequencySelection(R.id.chip_freq_daily)
         }
         findViewById<TextView>(R.id.chip_freq_weekly)?.setOnClickListener {
+            selectedFrequency = "weekly"
             updateFrequencySelection(R.id.chip_freq_weekly)
         }
         findViewById<TextView>(R.id.chip_freq_as_needed)?.setOnClickListener {
+            selectedFrequency = "as_needed"
             updateFrequencySelection(R.id.chip_freq_as_needed)
         }
 
         // Setup Start/End Date Picker Dialogs
         val layoutStartDate = findViewById<LinearLayout>(R.id.layout_start_date)
-        val txtStartDate = findViewById<TextView>(R.id.txt_start_date)
         layoutStartDate?.setOnClickListener {
             showDatePicker(txtStartDate)
         }
 
         val layoutEndDate = findViewById<LinearLayout>(R.id.layout_end_date)
-        val txtEndDate = findViewById<TextView>(R.id.txt_end_date)
         layoutEndDate?.setOnClickListener {
             showDatePicker(txtEndDate)
         }
@@ -96,19 +118,82 @@ class AddMedicineActivity : AppCompatActivity() {
             showTimePicker()
         }
 
-        // Save Button Validation and Toast
+        // Default initial reminder times if empty
+        if (remindersList.isEmpty()) {
+            remindersList.addAll(listOf("08:00 AM", "08:00 PM"))
+            reminderAdapter.notifyDataSetChanged()
+        }
+
+        // Save Button Action
         findViewById<Button>(R.id.btn_save_medicine)?.setOnClickListener {
-            if (inputName.text.toString().trim().isEmpty()) {
-                Toast.makeText(this, "Please enter a medicine name", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "Medicine saved successfully", Toast.LENGTH_SHORT).show()
-                finish()
-            }
+            saveMedicineData(inputName.text.toString().trim(), inputDosage.text.toString().trim(), txtStartDate.text.toString(), txtEndDate.text.toString())
         }
 
         // Back Button
         findViewById<ImageView>(R.id.btn_back)?.setOnClickListener {
             finish()
+        }
+    }
+
+    private lateinit var sessionManager: SessionManager
+
+    private fun saveMedicineData(name: String, dosageVal: String, startD: String, endD: String) {
+        if (name.isEmpty()) {
+            Toast.makeText(this, "Please enter a medicine name", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val finalDosage = if (dosageVal.isNotEmpty()) "$dosageVal mg" else "1 unit"
+
+        val request = MedicineRequest(
+            name = name,
+            type = selectedType,
+            dosage = finalDosage,
+            frequency = selectedFrequency,
+            startDate = startD,
+            endDate = endD,
+            reminderTimes = remindersList
+        )
+
+        val apiService = RetrofitClient.getApiService(this)
+        
+        if (medId != null) {
+            // Edit mode
+            apiService.updateMedicine(medId!!, request)
+                .enqueue(object : Callback<BaseResponse> {
+                    override fun onResponse(call: Call<BaseResponse>, response: Response<BaseResponse>) {
+                        if (response.isSuccessful && response.body()?.success == true) {
+                            Toast.makeText(this@AddMedicineActivity, "Medicine updated successfully", Toast.LENGTH_SHORT).show()
+                            finish()
+                        } else {
+                            val errMsg = RetrofitClient.parseErrorMessage(response)
+                            Toast.makeText(this@AddMedicineActivity, errMsg, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+
+                    override fun onFailure(call: Call<BaseResponse>, t: Throwable) {
+                        Toast.makeText(this@AddMedicineActivity, "Network error updating medicine", Toast.LENGTH_SHORT).show()
+                    }
+                })
+        } else {
+            // Create mode
+            apiService.createMedicine(request)
+                .enqueue(object : Callback<MedicineResponse> {
+                    override fun onResponse(call: Call<MedicineResponse>, response: Response<MedicineResponse>) {
+                        val body = response.body()
+                        if (response.isSuccessful && body != null && body.success) {
+                            Toast.makeText(this@AddMedicineActivity, "Medicine saved successfully", Toast.LENGTH_SHORT).show()
+                            finish()
+                        } else {
+                            val errMsg = RetrofitClient.parseErrorMessage(response)
+                            Toast.makeText(this@AddMedicineActivity, errMsg, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+
+                    override fun onFailure(call: Call<MedicineResponse>, t: Throwable) {
+                        Toast.makeText(this@AddMedicineActivity, "Network error saving medicine", Toast.LENGTH_SHORT).show()
+                    }
+                })
         }
     }
 

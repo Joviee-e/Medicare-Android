@@ -1,6 +1,7 @@
 package com.example.medicare
 
 data class MedicineItem(
+    val id: String,
     val name: String,
     val dose: String,
     val info: String,

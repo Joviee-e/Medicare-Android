@@ -131,6 +131,7 @@
                         app:layout_constraintBottom_toBottomOf="parent">
 
                         <com.example.medicare.CircularProgressView
+                            android:id="@+id/circular_progress"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"/>
 
@@ -142,6 +143,7 @@
                             android:layout_gravity="center">
 
                             <TextView
+                                android:id="@+id/txt_progress_fraction"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="3 / 4"
@@ -254,6 +256,7 @@
                             app:tint="@color/status_taken"/>
 
                         <TextView
+                            android:id="@+id/txt_upcoming_time"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="10:00 AM"
@@ -263,6 +266,7 @@
                             android:layout_marginStart="4dp"/>
 
                         <TextView
+                            android:id="@+id/txt_upcoming_countdown"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="In 30 min"

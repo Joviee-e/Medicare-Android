@@ -50,11 +50,21 @@ class ScheduleAdapter(private val items: List<ScheduleItem>) :
                 holder.txtStatus.setBackgroundResource(R.drawable.bg_status_missed)
                 holder.txtStatus.setTextColor(ContextCompat.getColor(context, R.color.status_missed))
             }
+            else -> { // Handles other states like Skipped/Snoozed dynamically
+                holder.imgIcon.setImageResource(R.drawable.ic_clock)
+                holder.txtStatus.setBackgroundResource(R.drawable.bg_status_upcoming)
+                holder.txtStatus.setTextColor(ContextCompat.getColor(context, R.color.primary))
+            }
         }
 
-        // Click to launch ReminderAlarmActivity
+        // Click to launch ReminderAlarmActivity with specific medication parameters
         holder.itemView.setOnClickListener {
-            val intent = Intent(context, ReminderAlarmActivity::class.java)
+            val intent = Intent(context, ReminderAlarmActivity::class.java).apply {
+                putExtra("med_id", item.id)
+                putExtra("med_name", item.name)
+                putExtra("med_dose", item.dose)
+                putExtra("med_time", item.time)
+            }
             context.startActivity(intent)
         }
     }

@@ -7,8 +7,15 @@ import androidx.appcompat.app.AppCompatActivity
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Redirect to HomeActivity
-        val intent = Intent(this, HomeActivity::class.java)
+        
+        val sessionManager = SessionManager(this)
+        
+        val intent = if (sessionManager.isLoggedIn()) {
+            Intent(this, HomeActivity::class.java)
+        } else {
+            Intent(this, LoginActivity::class.java)
+        }
+        
         startActivity(intent)
         finish()
     }
