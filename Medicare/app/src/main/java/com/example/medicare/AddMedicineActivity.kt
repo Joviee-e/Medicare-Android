@@ -12,6 +12,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.medicare.api.BaseResponse
 import com.example.medicare.api.MedicineRequest
 import com.example.medicare.api.MedicineResponse
+import com.example.medicare.api.GetMedicinesResponse
+import com.example.medicare.api.ApiMedicine
 import com.example.medicare.api.RetrofitClient
 import com.google.android.material.card.MaterialCardView
 import retrofit2.Call
@@ -45,7 +47,9 @@ class AddMedicineActivity : BaseActivity() {
         // Setup Reminders RecyclerView
         val recyclerReminders = findViewById<RecyclerView>(R.id.recycler_reminders)
         recyclerReminders.layoutManager = LinearLayoutManager(this)
-        reminderAdapter = ReminderAdapter(remindersList)
+        reminderAdapter = ReminderAdapter(remindersList) { position ->
+            showTimePicker(position)
+        }
         recyclerReminders.adapter = reminderAdapter
 
         // Pre-set default dates (today)
@@ -68,6 +72,7 @@ class AddMedicineActivity : BaseActivity() {
                 val numericDose = editDose.takeWhile { it.isDigit() }
                 inputDosage.setText(numericDose.ifEmpty { editDose })
             }
+            fetchMedicineDetails(medId!!)
         }
 
         // Setup Medicine Type Card Single-Selects
@@ -163,6 +168,20 @@ class AddMedicineActivity : BaseActivity() {
                 .enqueue(object : Callback<BaseResponse> {
                     override fun onResponse(call: Call<BaseResponse>, response: Response<BaseResponse>) {
                         if (response.isSuccessful && response.body()?.success == true) {
+                            val apiMed = ApiMedicine(
+                                id = medId!!,
+                                patientId = "",
+                                name = request.name,
+                                type = request.type,
+                                dosage = request.dosage,
+                                frequency = request.frequency,
+                                startDate = request.startDate,
+                                endDate = request.endDate,
+                                reminderTimes = request.reminderTimes,
+                                logs = emptyList()
+                            )
+                            AlarmScheduler.scheduleAlarms(this@AddMedicineActivity, apiMed)
+
                             Toast.makeText(this@AddMedicineActivity, "Medicine updated successfully", Toast.LENGTH_SHORT).show()
                             finish()
                         } else {
@@ -182,6 +201,22 @@ class AddMedicineActivity : BaseActivity() {
                     override fun onResponse(call: Call<MedicineResponse>, response: Response<MedicineResponse>) {
                         val body = response.body()
                         if (response.isSuccessful && body != null && body.success) {
+                            val createdMedId = body.medicineId ?: ""
+                            if (createdMedId.isNotEmpty()) {
+                                val apiMed = ApiMedicine(
+                                    id = createdMedId,
+                                    patientId = "",
+                                    name = request.name,
+                                    type = request.type,
+                                    dosage = request.dosage,
+                                    frequency = request.frequency,
+                                    startDate = request.startDate,
+                                    endDate = request.endDate,
+                                    reminderTimes = request.reminderTimes,
+                                    logs = emptyList()
+                                )
+                                AlarmScheduler.scheduleAlarms(this@AddMedicineActivity, apiMed)
+                            }
                             Toast.makeText(this@AddMedicineActivity, "Medicine saved successfully", Toast.LENGTH_SHORT).show()
                             finish()
                         } else {
@@ -260,21 +295,97 @@ class AddMedicineActivity : BaseActivity() {
         picker.show()
     }
 
-    private fun showTimePicker() {
+    private fun showTimePicker(editPosition: Int? = null) {
         val calendar = Calendar.getInstance()
+        var initialHour = calendar.get(Calendar.HOUR_OF_DAY)
+        var initialMinute = calendar.get(Calendar.MINUTE)
+
+        if (editPosition != null && editPosition in remindersList.indices) {
+            val currentTimeStr = remindersList[editPosition]
+            try {
+                val format = SimpleDateFormat("hh:mm a", Locale.US)
+                val date = format.parse(currentTimeStr)
+                if (date != null) {
+                    val tempCal = Calendar.getInstance().apply { time = date }
+                    initialHour = tempCal.get(Calendar.HOUR_OF_DAY)
+                    initialMinute = tempCal.get(Calendar.MINUTE)
+                }
+            } catch (e: Exception) {
+                // Fallback to current time
+            }
+        }
+
         val picker = TimePickerDialog(
             this,
             { _, hourOfDay, minute ->
                 val amPm = if (hourOfDay < 12) "AM" else "PM"
                 val hour = if (hourOfDay % 12 == 0) 12 else hourOfDay % 12
-                val formattedTime = String.format("%02d:%02d %s", hour, minute, amPm)
-                remindersList.add(formattedTime)
-                reminderAdapter.notifyItemInserted(remindersList.size - 1)
+                val formattedTime = String.format(Locale.US, "%02d:%02d %s", hour, minute, amPm)
+                if (editPosition != null && editPosition in remindersList.indices) {
+                    remindersList[editPosition] = formattedTime
+                    reminderAdapter.notifyItemChanged(editPosition)
+                } else {
+                    remindersList.add(formattedTime)
+                    reminderAdapter.notifyItemInserted(remindersList.size - 1)
+                }
             },
-            calendar.get(Calendar.HOUR_OF_DAY),
-            calendar.get(Calendar.MINUTE),
+            initialHour,
+            initialMinute,
             false
         )
         picker.show()
+    }
+
+    private fun fetchMedicineDetails(medicineId: String) {
+        val apiService = RetrofitClient.getApiService(this)
+        apiService.getMedicines().enqueue(object : Callback<GetMedicinesResponse> {
+            override fun onResponse(call: Call<GetMedicinesResponse>, response: Response<GetMedicinesResponse>) {
+                val body = response.body()
+                if (response.isSuccessful && body != null && body.success) {
+                    val apiMed = body.medicines.find { it.id == medicineId }
+                    if (apiMed != null) {
+                        findViewById<EditText>(R.id.input_med_name).setText(apiMed.name)
+                        
+                        // Strip out " mg" or other units for numeric value
+                        val numericDose = apiMed.dosage.takeWhile { it.isDigit() }
+                        findViewById<EditText>(R.id.input_dosage_value).setText(numericDose.ifEmpty { apiMed.dosage })
+                        
+                        // Set Type card selection
+                        selectedType = apiMed.type
+                        val typeCardId = when (selectedType) {
+                            "tablet" -> R.id.card_type_tablet
+                            "capsule" -> R.id.card_type_capsule
+                            "syrup" -> R.id.card_type_syrup
+                            "injection" -> R.id.card_type_injection
+                            else -> R.id.card_type_tablet
+                        }
+                        updateTypeSelection(typeCardId)
+
+                        // Set Frequency chip selection
+                        selectedFrequency = apiMed.frequency
+                        val freqChipId = when (selectedFrequency) {
+                            "daily" -> R.id.chip_freq_daily
+                            "weekly" -> R.id.chip_freq_weekly
+                            "as_needed" -> R.id.chip_freq_as_needed
+                            else -> R.id.chip_freq_daily
+                        }
+                        updateFrequencySelection(freqChipId)
+
+                        // Set Dates
+                        findViewById<TextView>(R.id.txt_start_date).text = apiMed.startDate
+                        findViewById<TextView>(R.id.txt_end_date).text = apiMed.endDate
+
+                        // Set Reminder Times
+                        remindersList.clear()
+                        remindersList.addAll(apiMed.reminderTimes)
+                        reminderAdapter.notifyDataSetChanged()
+                    }
+                }
+            }
+
+            override fun onFailure(call: Call<GetMedicinesResponse>, t: Throwable) {
+                Toast.makeText(this@AddMedicineActivity, "Error loading medicine details", Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 }

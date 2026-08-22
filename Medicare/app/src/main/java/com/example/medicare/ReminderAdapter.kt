@@ -7,8 +7,10 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-class ReminderAdapter(private val items: MutableList<String>) :
-    RecyclerView.Adapter<ReminderAdapter.ViewHolder>() {
+class ReminderAdapter(
+    private val items: MutableList<String>,
+    private val onEditClick: (position: Int) -> Unit
+) : RecyclerView.Adapter<ReminderAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val txtTime: TextView = view.findViewById(R.id.txt_reminder_time)
@@ -32,6 +34,13 @@ class ReminderAdapter(private val items: MutableList<String>) :
                 items.removeAt(pos)
                 notifyItemRemoved(pos)
                 notifyItemRangeChanged(pos, itemCount)
+            }
+        }
+
+        holder.btnSelect.setOnClickListener {
+            val pos = holder.adapterPosition
+            if (pos != RecyclerView.NO_POSITION) {
+                onEditClick(pos)
             }
         }
     }

@@ -107,6 +107,7 @@ class MedicineAdapter(private val items: MutableList<MedicineItem>) :
                             .enqueue(object : Callback<BaseResponse> {
                                 override fun onResponse(call: Call<BaseResponse>, response: Response<BaseResponse>) {
                                     if (response.isSuccessful && response.body()?.success == true) {
+                                        AlarmScheduler.cancelAlarms(context, medId, 10)
                                         Toast.makeText(context, "Medicine deleted", Toast.LENGTH_SHORT).show()
                                         items.removeAt(pos)
                                         notifyItemRemoved(pos)

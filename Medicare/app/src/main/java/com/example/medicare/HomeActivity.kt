@@ -1,6 +1,12 @@
 package com.example.medicare
 
+import android.Manifest
+import android.app.AlarmManager
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -8,6 +14,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.medicare.api.ApiMedicine
@@ -76,7 +83,40 @@ class HomeActivity : BaseActivity() {
 
     override fun onResume() {
         super.onResume()
+        checkPermissionsAndAlarms()
         loadDailySchedule()
+    }
+
+    private fun checkPermissionsAndAlarms() {
+        // Request post notifications permission on Android 13+ (API 33+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 101)
+            }
+        }
+
+        // Check exact alarm permission on Android 12+ (API 31+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            if (!alarmManager.canScheduleExactAlarms()) {
+                androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("Precise Medication Alarms Required")
+                    .setMessage("Medicare needs Alarms & Reminders permission to ring medication reminders precisely on time. Please enable it in system settings.")
+                    .setPositiveButton("Go to Settings") { _, _ ->
+                        try {
+                            val intent = Intent().apply {
+                                action = android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
+                                data = Uri.parse("package:$packageName")
+                            }
+                            startActivity(intent)
+                        } catch (e: Exception) {
+                            Toast.makeText(this, "Unable to open settings", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    .setNegativeButton("Not Now", null)
+                    .show()
+            }
+        }
     }
 
     private fun loadDailySchedule() {
@@ -86,6 +126,11 @@ class HomeActivity : BaseActivity() {
                     val body = response.body()
                     if (response.isSuccessful && body != null && body.success) {
                         populateSchedule(body.medicines)
+                        
+                        // Idempotently sync/reschedule alarms for all active medicines
+                        for (med in body.medicines) {
+                            AlarmScheduler.scheduleAlarms(this@HomeActivity, med)
+                        }
                     } else {
                         val errMsg = RetrofitClient.parseErrorMessage(response)
                         Toast.makeText(this@HomeActivity, errMsg, Toast.LENGTH_SHORT).show()
