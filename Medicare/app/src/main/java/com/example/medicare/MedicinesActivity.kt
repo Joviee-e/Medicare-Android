@@ -85,24 +85,36 @@ class MedicinesActivity : BaseActivity() {
     }
 
     private fun loadMedicines() {
+        val cachedList = MedicineCache.getMedicines()
+        if (cachedList.isNotEmpty()) {
+            masterList.clear()
+            for (apiMed in cachedList) {
+                masterList.add(mapToMedicineItem(apiMed))
+            }
+            applyFilter()
+        }
+
         RetrofitClient.getApiService(this).getMedicines()
             .enqueue(object : Callback<GetMedicinesResponse> {
                 override fun onResponse(call: Call<GetMedicinesResponse>, response: Response<GetMedicinesResponse>) {
                     val body = response.body()
                     if (response.isSuccessful && body != null && body.success) {
                         masterList.clear()
+                        MedicineCache.updateCache(this@MedicinesActivity, body.medicines)
                         for (apiMed in body.medicines) {
                             masterList.add(mapToMedicineItem(apiMed))
                         }
                         applyFilter()
                     } else {
-                        val errMsg = RetrofitClient.parseErrorMessage(response)
-                        Toast.makeText(this@MedicinesActivity, errMsg, Toast.LENGTH_SHORT).show()
+                        if (cachedList.isEmpty()) {
+                            val errMsg = RetrofitClient.parseErrorMessage(response)
+                            Toast.makeText(this@MedicinesActivity, errMsg, Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
 
                 override fun onFailure(call: Call<GetMedicinesResponse>, t: Throwable) {
-                    Toast.makeText(this@MedicinesActivity, "Failed to load medicines from cloud", Toast.LENGTH_SHORT).show()
+                    // Silent fallback
                 }
             })
     }

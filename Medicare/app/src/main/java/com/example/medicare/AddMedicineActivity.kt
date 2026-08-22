@@ -337,6 +337,12 @@ class AddMedicineActivity : BaseActivity() {
     }
 
     private fun fetchMedicineDetails(medicineId: String) {
+        val cached = MedicineCache.getMedicine(medicineId)
+        if (cached != null) {
+            populateFields(cached)
+            return
+        }
+
         val apiService = RetrofitClient.getApiService(this)
         apiService.getMedicines().enqueue(object : Callback<GetMedicinesResponse> {
             override fun onResponse(call: Call<GetMedicinesResponse>, response: Response<GetMedicinesResponse>) {
@@ -344,41 +350,8 @@ class AddMedicineActivity : BaseActivity() {
                 if (response.isSuccessful && body != null && body.success) {
                     val apiMed = body.medicines.find { it.id == medicineId }
                     if (apiMed != null) {
-                        findViewById<EditText>(R.id.input_med_name).setText(apiMed.name)
-                        
-                        // Strip out " mg" or other units for numeric value
-                        val numericDose = apiMed.dosage.takeWhile { it.isDigit() }
-                        findViewById<EditText>(R.id.input_dosage_value).setText(numericDose.ifEmpty { apiMed.dosage })
-                        
-                        // Set Type card selection
-                        selectedType = apiMed.type
-                        val typeCardId = when (selectedType) {
-                            "tablet" -> R.id.card_type_tablet
-                            "capsule" -> R.id.card_type_capsule
-                            "syrup" -> R.id.card_type_syrup
-                            "injection" -> R.id.card_type_injection
-                            else -> R.id.card_type_tablet
-                        }
-                        updateTypeSelection(typeCardId)
-
-                        // Set Frequency chip selection
-                        selectedFrequency = apiMed.frequency
-                        val freqChipId = when (selectedFrequency) {
-                            "daily" -> R.id.chip_freq_daily
-                            "weekly" -> R.id.chip_freq_weekly
-                            "as_needed" -> R.id.chip_freq_as_needed
-                            else -> R.id.chip_freq_daily
-                        }
-                        updateFrequencySelection(freqChipId)
-
-                        // Set Dates
-                        findViewById<TextView>(R.id.txt_start_date).text = apiMed.startDate
-                        findViewById<TextView>(R.id.txt_end_date).text = apiMed.endDate
-
-                        // Set Reminder Times
-                        remindersList.clear()
-                        remindersList.addAll(apiMed.reminderTimes)
-                        reminderAdapter.notifyDataSetChanged()
+                        MedicineCache.updateCache(this@AddMedicineActivity, body.medicines)
+                        populateFields(apiMed)
                     }
                 }
             }
@@ -387,5 +360,43 @@ class AddMedicineActivity : BaseActivity() {
                 Toast.makeText(this@AddMedicineActivity, "Error loading medicine details", Toast.LENGTH_SHORT).show()
             }
         })
+    }
+
+    private fun populateFields(apiMed: ApiMedicine) {
+        findViewById<EditText>(R.id.input_med_name).setText(apiMed.name)
+        
+        // Strip out " mg" or other units for numeric value
+        val numericDose = apiMed.dosage.takeWhile { it.isDigit() }
+        findViewById<EditText>(R.id.input_dosage_value).setText(numericDose.ifEmpty { apiMed.dosage })
+        
+        // Set Type card selection
+        selectedType = apiMed.type
+        val typeCardId = when (selectedType) {
+            "tablet" -> R.id.card_type_tablet
+            "capsule" -> R.id.card_type_capsule
+            "syrup" -> R.id.card_type_syrup
+            "injection" -> R.id.card_type_injection
+            else -> R.id.card_type_tablet
+        }
+        updateTypeSelection(typeCardId)
+
+        // Set Frequency chip selection
+        selectedFrequency = apiMed.frequency
+        val freqChipId = when (selectedFrequency) {
+            "daily" -> R.id.chip_freq_daily
+            "weekly" -> R.id.chip_freq_weekly
+            "as_needed" -> R.id.chip_freq_as_needed
+            else -> R.id.chip_freq_daily
+        }
+        updateFrequencySelection(freqChipId)
+
+        // Set Dates
+        findViewById<TextView>(R.id.txt_start_date).text = apiMed.startDate
+        findViewById<TextView>(R.id.txt_end_date).text = apiMed.endDate
+
+        // Set Reminder Times
+        remindersList.clear()
+        remindersList.addAll(apiMed.reminderTimes)
+        reminderAdapter.notifyDataSetChanged()
     }
 }

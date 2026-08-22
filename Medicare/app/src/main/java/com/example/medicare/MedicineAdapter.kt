@@ -103,23 +103,45 @@ class MedicineAdapter(private val items: MutableList<MedicineItem>) :
                     .setNegativeButton("Cancel", null)
                     .setPositiveButton("Delete") { _, _ ->
                         val medId = items[pos].id
+                        
+                        // 1. Cancel alarms immediately on device
+                        AlarmScheduler.cancelAlarms(context, medId, 10)
+                        
+                        Toast.makeText(context, "Deleting medication...", Toast.LENGTH_SHORT).show()
+
                         RetrofitClient.getApiService(context).deleteMedicine(medId)
                             .enqueue(object : Callback<BaseResponse> {
                                 override fun onResponse(call: Call<BaseResponse>, response: Response<BaseResponse>) {
                                     if (response.isSuccessful && response.body()?.success == true) {
-                                        AlarmScheduler.cancelAlarms(context, medId, 10)
+                                        // 2. SUCCESS: Remove from cache and UI
+                                        MedicineCache.removeMedicine(context, medId)
                                         Toast.makeText(context, "Medicine deleted", Toast.LENGTH_SHORT).show()
-                                        items.removeAt(pos)
-                                        notifyItemRemoved(pos)
-                                        notifyItemRangeChanged(pos, itemCount)
+                                        
+                                        // Safety check: make sure position is still valid before removing
+                                        val currentPos = holder.adapterPosition
+                                        if (currentPos != RecyclerView.NO_POSITION && currentPos < items.size) {
+                                            items.removeAt(currentPos)
+                                            notifyItemRemoved(currentPos)
+                                            notifyItemRangeChanged(currentPos, itemCount)
+                                        }
                                     } else {
+                                        // 3. FAILURE: Keep cache, restore alarms, show error
+                                        val cachedMed = MedicineCache.getMedicine(medId)
+                                        if (cachedMed != null) {
+                                            AlarmScheduler.scheduleAlarms(context, cachedMed)
+                                        }
                                         val errMsg = RetrofitClient.parseErrorMessage(response)
-                                        Toast.makeText(context, errMsg, Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, "Failed to delete: $errMsg", Toast.LENGTH_SHORT).show()
                                     }
                                 }
 
                                 override fun onFailure(call: Call<BaseResponse>, t: Throwable) {
-                                    Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show()
+                                    // 3. FAILURE: Keep cache, restore alarms, show error
+                                    val cachedMed = MedicineCache.getMedicine(medId)
+                                    if (cachedMed != null) {
+                                        AlarmScheduler.scheduleAlarms(context, cachedMed)
+                                    }
+                                    Toast.makeText(context, "Network error deleting medicine", Toast.LENGTH_SHORT).show()
                                 }
                             })
                     }

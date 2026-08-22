@@ -62,6 +62,9 @@ class HomeActivity : BaseActivity() {
         txtUpcomingCountdown = findViewById(R.id.txt_upcoming_countdown)
         btnTakeNow = findViewById(R.id.btn_take_now)
 
+        // Load cached medicines from preferences (local-first)
+        MedicineCache.loadFromPrefs(this)
+
         // Setup custom bottom navigation
         NavigationHelper.setupNavigation(this, R.id.tab_home)
 
@@ -120,11 +123,17 @@ class HomeActivity : BaseActivity() {
     }
 
     private fun loadDailySchedule() {
+        val cachedList = MedicineCache.getMedicines()
+        if (cachedList.isNotEmpty()) {
+            populateSchedule(cachedList)
+        }
+
         RetrofitClient.getApiService(this).getMedicines()
             .enqueue(object : Callback<GetMedicinesResponse> {
                 override fun onResponse(call: Call<GetMedicinesResponse>, response: Response<GetMedicinesResponse>) {
                     val body = response.body()
                     if (response.isSuccessful && body != null && body.success) {
+                        MedicineCache.updateCache(this@HomeActivity, body.medicines)
                         populateSchedule(body.medicines)
                         
                         // Idempotently sync/reschedule alarms for all active medicines
@@ -132,13 +141,16 @@ class HomeActivity : BaseActivity() {
                             AlarmScheduler.scheduleAlarms(this@HomeActivity, med)
                         }
                     } else {
-                        val errMsg = RetrofitClient.parseErrorMessage(response)
-                        Toast.makeText(this@HomeActivity, errMsg, Toast.LENGTH_SHORT).show()
+                        // Silent fallback to avoid clearing cache or showing empty views when offline
+                        if (cachedList.isEmpty()) {
+                            val errMsg = RetrofitClient.parseErrorMessage(response)
+                            Toast.makeText(this@HomeActivity, errMsg, Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
 
                 override fun onFailure(call: Call<GetMedicinesResponse>, t: Throwable) {
-                    Toast.makeText(this@HomeActivity, "Failed to load schedule from cloud", Toast.LENGTH_SHORT).show()
+                    // Silent fallback
                 }
             })
     }

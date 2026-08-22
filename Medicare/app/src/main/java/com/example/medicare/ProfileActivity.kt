@@ -163,14 +163,12 @@ class ProfileActivity : BaseActivity() {
                         sessionManager.saveUserName(profile.name)
                         sessionManager.saveOnboardingStatus(profile.onboardingStatus ?: "COMPLETED")
 
-                        // Accessibility Bindings
+                        // Accessibility Bindings (prioritize local device settings)
                         isBindingData = true
-                        profile.accessibilitySettings?.let { settings ->
-                            switchContrast.isChecked = settings.contrastMode
-                            switchVoice.isChecked = settings.voiceInput
-                            switchHaptic.isChecked = settings.hapticFeedback
-                            seekbarFont.progress = settings.fontSize
-                        }
+                        switchContrast.isChecked = sessionManager.isContrastMode()
+                        switchVoice.isChecked = sessionManager.isVoiceRemindersEnabled()
+                        switchHaptic.isChecked = sessionManager.isHapticFeedbackEnabled()
+                        seekbarFont.progress = sessionManager.getFontSize()
                         isBindingData = false
                     }
                 }
@@ -310,7 +308,6 @@ class ProfileActivity : BaseActivity() {
         switchContrast.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked != sessionManager.isContrastMode()) {
                 sessionManager.setContrastMode(isChecked)
-                syncAccessibility()
                 recreate()
             }
         }
@@ -318,14 +315,12 @@ class ProfileActivity : BaseActivity() {
         switchVoice.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked != sessionManager.isVoiceRemindersEnabled()) {
                 sessionManager.setVoiceRemindersEnabled(isChecked)
-                syncAccessibility()
             }
         }
         
         switchHaptic.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked != sessionManager.isHapticFeedbackEnabled()) {
                 sessionManager.setHapticFeedbackEnabled(isChecked)
-                syncAccessibility()
             }
         }
 
@@ -336,51 +331,10 @@ class ProfileActivity : BaseActivity() {
                 val progress = seekBar?.progress ?: 2
                 if (progress != sessionManager.getFontSize()) {
                     sessionManager.setFontSize(progress)
-                    syncAccessibility()
                     recreate()
                 }
             }
         })
-    }
-
-    private fun syncAccessibility() {
-        val profile = cachedProfile ?: return
-        val settings = AccessibilitySettings(
-            contrastMode = switchContrast.isChecked,
-            voiceInput = switchVoice.isChecked,
-            hapticFeedback = switchHaptic.isChecked,
-            fontSize = seekbarFont.progress
-        )
-
-        // Make sure local preferences are saved to handle loaded data from backend on first fetch
-        sessionManager.setContrastMode(settings.contrastMode)
-        sessionManager.setVoiceRemindersEnabled(settings.voiceInput)
-        sessionManager.setHapticFeedbackEnabled(settings.hapticFeedback)
-        sessionManager.setFontSize(settings.fontSize)
-
-        val request = UpdateProfileRequest(
-            name = profile.name,
-            bloodGroup = profile.bloodGroup ?: "O+",
-            emergencyContacts = profile.emergencyContacts ?: emptyList(),
-            dateOfBirth = profile.dateOfBirth ?: "",
-            age = profile.age ?: "",
-            gender = profile.gender ?: "",
-            phone = profile.phone ?: "",
-            address = profile.address ?: "",
-            medicalInformation = MedicalInformation(
-                profile.medicalInformation?.allergies ?: "",
-                profile.medicalInformation?.conditions ?: "",
-                profile.medicalInformation?.medications ?: ""
-            ),
-            onboardingStatus = profile.onboardingStatus ?: "COMPLETED",
-            accessibilitySettings = settings
-        )
-
-        RetrofitClient.getApiService(this).updateProfile(request)
-            .enqueue(object : Callback<BaseResponse> {
-                override fun onResponse(call: Call<BaseResponse>, response: Response<BaseResponse>) {}
-                override fun onFailure(call: Call<BaseResponse>, t: Throwable) {}
-            })
     }
 
     private fun logoutUser() {
@@ -391,6 +345,7 @@ class ProfileActivity : BaseActivity() {
             })
 
         sessionManager.logout()
+        MedicineCache.clearMemoryCache()
         Toast.makeText(this, "Signed out successfully", Toast.LENGTH_SHORT).show()
         val intent = Intent(this, LoginActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
