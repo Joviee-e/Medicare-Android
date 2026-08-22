@@ -20,7 +20,7 @@ import retrofit2.Response
 import java.text.SimpleDateFormat
 import java.util.*
 
-class HomeActivity : AppCompatActivity() {
+class HomeActivity : BaseActivity() {
 
     private lateinit var sessionManager: SessionManager
     private lateinit var circularProgress: CircularProgressView

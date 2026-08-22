@@ -45,6 +45,22 @@ class SessionManager(context: Context) {
         prefs.edit().putString(KEY_ONBOARDING_STATUS, status).apply()
     }
 
+    // Accessibility Settings Persistence
+    fun getFontSize(): Int = prefs.getInt("font_size", 2)
+    fun setFontSize(size: Int) = prefs.edit().putInt("font_size", size).apply()
+
+    fun isContrastMode(): Boolean = prefs.getBoolean("contrast_mode", false)
+    fun setContrastMode(enabled: Boolean) = prefs.edit().putBoolean("contrast_mode", enabled).apply()
+
+    fun isVoiceRemindersEnabled(): Boolean = prefs.getBoolean("voice_reminders", false)
+    fun setVoiceRemindersEnabled(enabled: Boolean) = prefs.edit().putBoolean("voice_reminders", enabled).apply()
+
+    fun isReminderSoundsEnabled(): Boolean = prefs.getBoolean("reminder_sounds", true)
+    fun setReminderSoundsEnabled(enabled: Boolean) = prefs.edit().putBoolean("reminder_sounds", enabled).apply()
+
+    fun isHapticFeedbackEnabled(): Boolean = prefs.getBoolean("haptic_feedback", true)
+    fun setHapticFeedbackEnabled(enabled: Boolean) = prefs.edit().putBoolean("haptic_feedback", enabled).apply()
+
     fun isLoggedIn(): Boolean = getAccessToken() != null
 
     fun logout() {

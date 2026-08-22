@@ -110,6 +110,7 @@
                             app:layout_constraintTop_toTopOf="parent"
                             app:layout_constraintBottom_toBottomOf="parent">
                             <ImageView
+                                android:id="@+id/img_profile_picture"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
                                 android:src="@drawable/ic_profile_filled"
@@ -641,11 +642,13 @@
                                 android:layout_marginTop="2dp"/>
                         </LinearLayout>
 
-                        <ImageView
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
-                            android:src="@drawable/ic_chevron_right"
-                            app:tint="@color/text_secondary"/>
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/switch_sounds"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true"
+                            app:thumbTint="@color/white"
+                            app:trackTint="@color/primary"/>
                     </LinearLayout>
 
                     <View

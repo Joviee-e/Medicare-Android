@@ -19,7 +19,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class MedicinesActivity : AppCompatActivity() {
+class MedicinesActivity : BaseActivity() {
 
     private val masterList = mutableListOf<MedicineItem>()
     private val displayedList = mutableListOf<MedicineItem>()

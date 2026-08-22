@@ -1,10 +1,18 @@
 package com.example.medicare
 
+import android.content.Context
+import android.content.Intent
+import android.media.Ringtone
+import android.media.RingtoneManager
+import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
+import android.speech.tts.TextToSpeech
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import com.example.medicare.api.BaseResponse
 import com.example.medicare.api.LogRequest
 import com.example.medicare.api.RetrofitClient
@@ -15,11 +23,18 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class ReminderAlarmActivity : AppCompatActivity() {
+class ReminderAlarmActivity : BaseActivity() {
+
+    private lateinit var sessionManager: SessionManager
+    private var tts: TextToSpeech? = null
+    private var ringtone: Ringtone? = null
+    private var vibrator: Vibrator? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_reminder_alarm)
+
+        sessionManager = SessionManager(this)
 
         val txtName = findViewById<TextView>(R.id.txt_alarm_med_name)
         val txtDose = findViewById<TextView>(R.id.txt_alarm_med_dose)
@@ -36,6 +51,54 @@ class ReminderAlarmActivity : AppCompatActivity() {
 
         txtName.text = medName
         txtDose.text = medDose
+
+        // 1. Voice Reminders (Text to Speech)
+        val isVoiceEnabled = sessionManager.isVoiceRemindersEnabled()
+        if (isVoiceEnabled) {
+            tts = TextToSpeech(this) { status ->
+                if (status == TextToSpeech.SUCCESS) {
+                    tts?.language = Locale.getDefault()
+                    val textToSpeak = "Time to take your medication: $medName, $medDose"
+                    tts?.speak(textToSpeak, TextToSpeech.QUEUE_FLUSH, null, "MedicationReminderTTS")
+                }
+            }
+        }
+
+        // 2. Reminder Sounds (RingtoneManager play sound once)
+        val isSoundEnabled = sessionManager.isReminderSoundsEnabled()
+        if (isSoundEnabled) {
+            try {
+                val notificationUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                ringtone = RingtoneManager.getRingtone(applicationContext, notificationUri)
+                ringtone?.play()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        // 3. Vibration (Haptic Feedback)
+        val isHapticEnabled = sessionManager.isHapticFeedbackEnabled()
+        if (isHapticEnabled) {
+            try {
+                vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                    vibratorManager.defaultVibrator
+                } else {
+                    @Suppress("DEPRECATION")
+                    getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                }
+                
+                val pattern = longArrayOf(0, 500, 1000) // vibrate 500ms, pause 1000ms
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator?.vibrate(VibrationEffect.createWaveform(pattern, 0))
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator?.vibrate(pattern, 0)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
 
         val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
@@ -59,7 +122,6 @@ class ReminderAlarmActivity : AppCompatActivity() {
             return
         }
 
-        // Clean time parameter for the backend logger
         val cleanTime = time.substringBefore(" ")
 
         val request = LogRequest(date = date, time = cleanTime, status = status)
@@ -81,5 +143,13 @@ class ReminderAlarmActivity : AppCompatActivity() {
                     finish()
                 }
             })
+    }
+
+    override fun onDestroy() {
+        tts?.stop()
+        tts?.shutdown()
+        ringtone?.stop()
+        vibrator?.cancel()
+        super.onDestroy()
     }
 }

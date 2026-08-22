@@ -22,7 +22,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-class AddMedicineActivity : AppCompatActivity() {
+class AddMedicineActivity : BaseActivity() {
 
     private val remindersList = mutableListOf<String>()
     private lateinit var reminderAdapter: ReminderAdapter

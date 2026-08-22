@@ -32,7 +32,7 @@ import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.libraries.places.api.net.SearchNearbyRequest
 import com.google.android.material.chip.Chip
 
-class PharmacyActivity : AppCompatActivity(), OnMapReadyCallback {
+class PharmacyActivity : BaseActivity(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
     private lateinit var fusedLocationClient: FusedLocationProviderClient

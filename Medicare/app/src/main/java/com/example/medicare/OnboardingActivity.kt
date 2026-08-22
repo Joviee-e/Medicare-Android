@@ -13,7 +13,7 @@ import retrofit2.Response
 import java.text.SimpleDateFormat
 import java.util.*
 
-class OnboardingActivity : AppCompatActivity() {
+class OnboardingActivity : BaseActivity() {
 
     private var currentStep = 1
     private var existingProfile: PatientProfile? = null

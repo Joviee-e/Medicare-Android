@@ -14,7 +14,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class AIAssistantActivity : AppCompatActivity() {
+class AIAssistantActivity : BaseActivity() {
 
     private val chatData = mutableListOf<ChatItem>()
     private lateinit var adapter: ChatAdapter

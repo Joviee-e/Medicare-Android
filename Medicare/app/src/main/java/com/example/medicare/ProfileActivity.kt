@@ -8,15 +8,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.PickVisualMediaRequest
 import com.example.medicare.api.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.util.*
 
-class ProfileActivity : AppCompatActivity() {
+class ProfileActivity : BaseActivity() {
 
     private lateinit var sessionManager: SessionManager
     private lateinit var txtName: TextView
@@ -37,6 +38,19 @@ class ProfileActivity : AppCompatActivity() {
 
     // Keep memory cache of fetched patient profile details
     private var cachedProfile: PatientProfile? = null
+    private var isBindingData = false
+
+    private val pickMedia = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) {
+            val imgProfile: ImageView = findViewById(R.id.img_profile_picture) ?: return@registerForActivityResult
+            val success = ProfileImageManager.saveProfilePicture(this, uri)
+            if (success) {
+                ProfileImageManager.displayProfilePicture(this, imgProfile)
+            } else {
+                Toast.makeText(this, "Failed to save profile picture", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,20 +88,37 @@ class ProfileActivity : AppCompatActivity() {
         // Setup dynamic listeners for accessibility controls to sync automatically to backend
         setupAccessibilitySync()
 
-        // Emergency call button
+        // Display profile picture on startup
+        val imgProfile = findViewById<ImageView>(R.id.img_profile_picture)
+        if (imgProfile != null) {
+            ProfileImageManager.displayProfilePicture(this, imgProfile)
+        }
+
+        // Emergency call button with normalized dialing
         findViewById<Button>(R.id.btn_call_emergency)?.setOnClickListener {
             val phoneNum = txtEmergPhone.text.toString().trim()
             if (phoneNum.isNotEmpty() && phoneNum != "Not Specified") {
-                val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phoneNum"))
+                val normalizedNum = PhoneNumberUtils.normalizeIndianPhoneNumber(phoneNum)
+                val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$normalizedNum"))
                 startActivity(intent)
             } else {
                 Toast.makeText(this, "No emergency number specified", Toast.LENGTH_SHORT).show()
             }
         }
 
-        // Profile pic overlay
+        // Profile pic overlay triggers PickVisualMedia
         findViewById<View>(R.id.photo_container)?.setOnClickListener {
-            Toast.makeText(this, "Photo uploads coming soon", Toast.LENGTH_SHORT).show()
+            pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+        }
+
+        // Reminder sounds switch UI and row click
+        val switchSounds = findViewById<SwitchCompat>(R.id.switch_sounds)
+        switchSounds?.isChecked = sessionManager.isReminderSoundsEnabled()
+        switchSounds?.setOnCheckedChangeListener { _, isChecked ->
+            sessionManager.setReminderSoundsEnabled(isChecked)
+        }
+        findViewById<View>(R.id.row_reminder_sounds)?.setOnClickListener {
+            switchSounds?.toggle()
         }
 
         // Sign Out trigger
@@ -133,12 +164,14 @@ class ProfileActivity : AppCompatActivity() {
                         sessionManager.saveOnboardingStatus(profile.onboardingStatus ?: "COMPLETED")
 
                         // Accessibility Bindings
+                        isBindingData = true
                         profile.accessibilitySettings?.let { settings ->
                             switchContrast.isChecked = settings.contrastMode
                             switchVoice.isChecked = settings.voiceInput
                             switchHaptic.isChecked = settings.hapticFeedback
                             seekbarFont.progress = settings.fontSize
                         }
+                        isBindingData = false
                     }
                 }
 
@@ -274,16 +307,38 @@ class ProfileActivity : AppCompatActivity() {
     }
 
     private fun setupAccessibilitySync() {
-        val syncListener = CompoundButton.OnCheckedChangeListener { _, _ -> syncAccessibility() }
-        switchContrast.setOnCheckedChangeListener(syncListener)
-        switchVoice.setOnCheckedChangeListener(syncListener)
-        switchHaptic.setOnCheckedChangeListener(syncListener)
+        switchContrast.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked != sessionManager.isContrastMode()) {
+                sessionManager.setContrastMode(isChecked)
+                syncAccessibility()
+                recreate()
+            }
+        }
+        
+        switchVoice.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked != sessionManager.isVoiceRemindersEnabled()) {
+                sessionManager.setVoiceRemindersEnabled(isChecked)
+                syncAccessibility()
+            }
+        }
+        
+        switchHaptic.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked != sessionManager.isHapticFeedbackEnabled()) {
+                sessionManager.setHapticFeedbackEnabled(isChecked)
+                syncAccessibility()
+            }
+        }
 
         seekbarFont.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {}
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                syncAccessibility()
+                val progress = seekBar?.progress ?: 2
+                if (progress != sessionManager.getFontSize()) {
+                    sessionManager.setFontSize(progress)
+                    syncAccessibility()
+                    recreate()
+                }
             }
         })
     }
@@ -296,6 +351,12 @@ class ProfileActivity : AppCompatActivity() {
             hapticFeedback = switchHaptic.isChecked,
             fontSize = seekbarFont.progress
         )
+
+        // Make sure local preferences are saved to handle loaded data from backend on first fetch
+        sessionManager.setContrastMode(settings.contrastMode)
+        sessionManager.setVoiceRemindersEnabled(settings.voiceInput)
+        sessionManager.setHapticFeedbackEnabled(settings.hapticFeedback)
+        sessionManager.setFontSize(settings.fontSize)
 
         val request = UpdateProfileRequest(
             name = profile.name,
