@@ -10,12 +10,14 @@ import org.json.JSONObject
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
     private var retrofit: Retrofit? = null
-    
-    // Default loopback connection pointing to Flask host running on developer workstation
-    private var baseUrl = "http://10.0.2.2:5000/api/"
+
+    // Production backend hosted on Render.
+    // All API calls use this single central base URL — do NOT hardcode URLs elsewhere.
+    private var baseUrl = "https://medicare-backend-me50.onrender.com/api/"
 
     fun setBaseUrl(url: String) {
         baseUrl = url
@@ -30,7 +32,13 @@ object RetrofitClient {
                 level = HttpLoggingInterceptor.Level.BODY
             }
 
+            // Render's free tier can take up to 60 s to cold-start after inactivity.
+            // These timeouts keep the connection alive through the spin-up period so the
+            // app does not silently fail before the backend responds.
             val okHttpClient = OkHttpClient.Builder()
+                .connectTimeout(60, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS)
                 .addInterceptor(loggingInterceptor)
                 .addInterceptor { chain ->
                     val originalRequest = chain.request()
