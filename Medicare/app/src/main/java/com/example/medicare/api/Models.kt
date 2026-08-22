@@ -150,3 +150,32 @@ data class LogRequest(
     val time: String,
     val status: String
 )
+
+// Geoapify Places Response models
+data class GeoapifyPlacesResponse(
+    val features: List<GeoapifyFeature>
+)
+
+data class GeoapifyFeature(
+    val properties: GeoapifyProperties,
+    val geometry: GeoapifyGeometry
+)
+
+data class GeoapifyGeometry(
+    val coordinates: List<Double> // [longitude, latitude]
+)
+
+data class GeoapifyProperties(
+    @SerializedName("place_id") val placeId: String,
+    val name: String? = null,
+    val formatted: String? = null,
+    val categories: List<String>? = null,
+    val distance: Double? = null,
+    val website: String? = null,
+    val contact: GeoapifyContact? = null
+)
+
+data class GeoapifyContact(
+    val phone: String? = null,
+    val email: String? = null
+)

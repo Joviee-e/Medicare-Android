@@ -18,6 +18,24 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Load Geoapify API key at build time without hardcoding or committing it
+        val envFile = project.rootProject.file("../Medicare-Backend/.env")
+        val localEnvFile = project.rootProject.file(".env")
+        val targetEnvFile = if (localEnvFile.exists()) localEnvFile else envFile
+        var geoapifyKey = ""
+        if (targetEnvFile.exists()) {
+            targetEnvFile.forEachLine { line ->
+                if (line.startsWith("GEOAPIFY_API_KEY=")) {
+                    geoapifyKey = line.substringAfter("GEOAPIFY_API_KEY=").trim()
+                }
+            }
+        }
+        buildConfigField("String", "GEOAPIFY_API_KEY", "\"$geoapifyKey\"")
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {
@@ -50,9 +68,8 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation(libs.gson)
     implementation(libs.play.services.auth)
-    implementation(libs.play.services.maps)
     implementation(libs.play.services.location)
-    implementation(libs.places)
+    implementation(libs.maplibre.sdk)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
