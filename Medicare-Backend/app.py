@@ -52,6 +52,7 @@ def create_app():
     app.register_blueprint(appointment_bp, url_prefix='/api/appointments')
 
     # Health Check API
+    @app.route('/health', methods=['GET'])
     @app.route('/api/health', methods=['GET'])
     def health_check():
         from database.mongo import check_connection
@@ -75,7 +76,8 @@ def create_app():
 
     return app
 
+app = create_app()
+
 if __name__ == '__main__':
-    app = create_app()
     logger.info(f"Starting MediCare+ Flask Server on port {Config.PORT} in {Config.FLASK_ENV} mode")
     app.run(host='0.0.0.0', port=Config.PORT, debug=Config.DEBUG)
