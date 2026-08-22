@@ -144,15 +144,15 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="2"
-                    android:hint="e.g. 500"
-                    android:textColorHint="@color/neutral_gray"
-                    android:textColor="@color/text_primary"
                     android:background="@drawable/bg_input_selector"
+                    android:hint="e.g. 10"
+                    android:inputType="text"
+                    android:maxLines="1"
                     android:paddingStart="16dp"
                     android:paddingEnd="16dp"
-                    android:textSize="15sp"
-                    android:inputType="text"
-                    android:maxLines="1"/>
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/neutral_gray"
+                    android:textSize="15sp" />
 
                 <!-- Custom Spinner layout equivalent for visual design match -->
                 <LinearLayout
@@ -224,23 +224,24 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
+                        android:gravity="center"
                         android:orientation="vertical"
-                        android:gravity="center">
+                        android:rotationY="2">
 
                         <ImageView
                             android:layout_width="32dp"
                             android:layout_height="32dp"
-                            android:src="@drawable/ic_pill"
-                            app:tint="@color/white"/>
+                            android:src="@drawable/tablets_solid_full"
+                            app:tint="@color/white" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
                             android:text="Tablet"
                             android:textColor="@color/white"
-                            android:textStyle="bold"
                             android:textSize="14sp"
-                            android:layout_marginTop="8dp"/>
+                            android:textStyle="bold" />
 
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -267,7 +268,7 @@
                         <ImageView
                             android:layout_width="32dp"
                             android:layout_height="32dp"
-                            android:src="@drawable/ic_capsule"
+                            android:src="@drawable/capsules_solid_full"
                             app:tint="@color/text_secondary"/>
 
                         <TextView
@@ -315,7 +316,7 @@
                         <ImageView
                             android:layout_width="32dp"
                             android:layout_height="32dp"
-                            android:src="@drawable/ic_syrup"
+                            android:src="@drawable/droplet_solid_full"
                             app:tint="@color/text_secondary"/>
 
                         <TextView
@@ -351,7 +352,7 @@
                         <ImageView
                             android:layout_width="32dp"
                             android:layout_height="32dp"
-                            android:src="@drawable/ic_injection"
+                            android:src="@drawable/syringe_solid_full"
                             app:tint="@color/text_secondary"/>
 
                         <TextView
