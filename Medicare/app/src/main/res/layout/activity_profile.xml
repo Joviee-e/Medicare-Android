@@ -385,8 +385,10 @@
                     <!-- Call Now red capsule button -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_call_emergency"
-                        android:layout_width="100dp"
-                        android:layout_height="38dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minWidth="90dp"
+                        android:minHeight="38dp"
                         android:text="Call Now"
                         android:textColor="@color/white"
                         android:textSize="11sp"
@@ -397,7 +399,10 @@
                         app:iconGravity="textStart"
                         android:backgroundTint="@color/emergency_text"
                         app:cornerRadius="100dp"
-                        android:padding="0dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:paddingTop="4dp"
+                        android:paddingBottom="4dp"
                         app:layout_constraintRight_toRightOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
                         app:layout_constraintBottom_toBottomOf="parent"/>

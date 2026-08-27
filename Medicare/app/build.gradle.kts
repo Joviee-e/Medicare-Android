@@ -71,6 +71,8 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.maplibre.sdk)
 
+    implementation("com.googlecode.libphonenumber:libphonenumber:8.13.35")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

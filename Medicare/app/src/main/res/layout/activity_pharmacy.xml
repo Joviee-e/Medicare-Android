@@ -190,7 +190,11 @@
                         android:layout_height="wrap_content"
                         android:text="Pharmacy"
                         android:checked="true"
-                        android:textColor="@color/text_primary"
+                        app:chipBackgroundColor="@color/chip_background"
+                        android:textColor="@color/chip_text"
+                        app:chipStrokeColor="@color/chip_stroke"
+                        app:chipStrokeWidth="1.5dp"
+                        app:rippleColor="@color/secondary_container"
                         android:layout_marginEnd="8dp"/>
 
                     <com.google.android.material.chip.Chip
@@ -199,7 +203,11 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Hospital"
-                        android:textColor="@color/text_primary"
+                        app:chipBackgroundColor="@color/chip_background"
+                        android:textColor="@color/chip_text"
+                        app:chipStrokeColor="@color/chip_stroke"
+                        app:chipStrokeWidth="1.5dp"
+                        app:rippleColor="@color/secondary_container"
                         android:layout_marginEnd="8dp"/>
 
                     <com.google.android.material.chip.Chip
@@ -208,7 +216,11 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Doctor/Clinic"
-                        android:textColor="@color/text_primary"
+                        app:chipBackgroundColor="@color/chip_background"
+                        android:textColor="@color/chip_text"
+                        app:chipStrokeColor="@color/chip_stroke"
+                        app:chipStrokeWidth="1.5dp"
+                        app:rippleColor="@color/secondary_container"
                         android:layout_marginEnd="8dp"/>
 
                     <com.google.android.material.chip.Chip
@@ -217,7 +229,11 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Emergency"
-                        android:textColor="@color/text_primary"
+                        app:chipBackgroundColor="@color/chip_background"
+                        android:textColor="@color/chip_text"
+                        app:chipStrokeColor="@color/chip_stroke"
+                        app:chipStrokeWidth="1.5dp"
+                        app:rippleColor="@color/secondary_container"
                         android:layout_marginEnd="8dp"/>
 
                     <com.google.android.material.chip.Chip
@@ -226,7 +242,11 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Laboratory"
-                        android:textColor="@color/text_primary"
+                        app:chipBackgroundColor="@color/chip_background"
+                        android:textColor="@color/chip_text"
+                        app:chipStrokeColor="@color/chip_stroke"
+                        app:chipStrokeWidth="1.5dp"
+                        app:rippleColor="@color/secondary_container"
                         android:layout_marginEnd="8dp"/>
 
                     <com.google.android.material.chip.Chip
@@ -235,7 +255,11 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Dentist"
-                        android:textColor="@color/text_primary"/>
+                        app:chipBackgroundColor="@color/chip_background"
+                        android:textColor="@color/chip_text"
+                        app:chipStrokeColor="@color/chip_stroke"
+                        app:chipStrokeWidth="1.5dp"
+                        app:rippleColor="@color/secondary_container"/>
 
                 </LinearLayout>
             </HorizontalScrollView>

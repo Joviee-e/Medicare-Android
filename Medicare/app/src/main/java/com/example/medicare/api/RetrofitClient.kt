@@ -17,7 +17,7 @@ object RetrofitClient {
 
     // Production backend hosted on Render.
     // All API calls use this single central base URL — do NOT hardcode URLs elsewhere.
-    private var baseUrl = "https://medicare-backend-me50.onrender.com/api/"
+    private var baseUrl = "http://10.0.2.2:5000/api/"
 
     fun setBaseUrl(url: String) {
         baseUrl = url

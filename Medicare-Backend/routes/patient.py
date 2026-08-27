@@ -33,6 +33,8 @@ def update_profile():
     age = str(data.get('age', '')).strip()
     gender = data.get('gender', '').strip()
     phone = data.get('phone', '').strip()
+    phone_country_code = data.get('phone_country_code', '').strip()
+    phone_national = data.get('phone_national', '').strip()
     address = data.get('address', '').strip()
     medical_information = data.get('medical_information') or {}
     onboarding_status = data.get('onboarding_status', 'COMPLETED').strip()
@@ -58,6 +60,33 @@ def update_profile():
     if not name:
         return jsonify({"success": False, "message": "Name field is required"}), 400
 
+    # Backend phone number validation using python-phonenumbers library
+    import phonenumbers
+    if phone:
+        try:
+            if phone.startswith("+"):
+                parsed = phonenumbers.parse(phone, None)
+            else:
+                parsed = phonenumbers.parse(phone, "IN")
+            if not phonenumbers.is_valid_number(parsed):
+                return jsonify({"success": False, "message": "Invalid phone number formatting"}), 400
+        except Exception:
+            return jsonify({"success": False, "message": "Invalid phone number formatting"}), 400
+
+    if emergency_contacts:
+        for c in emergency_contacts:
+            c_phone = c.get("phone", "").strip()
+            if c_phone and c_phone != "Not Specified":
+                try:
+                    if c_phone.startswith("+"):
+                        parsed_c = phonenumbers.parse(c_phone, None)
+                    else:
+                        parsed_c = phonenumbers.parse(c_phone, "IN")
+                    if not phonenumbers.is_valid_number(parsed_c):
+                        return jsonify({"success": False, "message": f"Invalid phone number formatting for emergency contact {c.get('name')}"}), 400
+                except Exception:
+                    return jsonify({"success": False, "message": f"Invalid phone number formatting for emergency contact {c.get('name')}"}), 400
+
     # Ensure status is valid
     if onboarding_status not in ("NOT_STARTED", "IN_PROGRESS", "SKIPPED", "COMPLETED"):
         return jsonify({"success": False, "message": "Invalid onboarding status"}), 400
@@ -74,7 +103,9 @@ def update_profile():
         address=address,
         medical_information=medical_information,
         onboarding_status=onboarding_status,
-        accessibility_settings=accessibility_settings
+        accessibility_settings=accessibility_settings,
+        phone_country_code=phone_country_code,
+        phone_national=phone_national
     )
 
     if not success:

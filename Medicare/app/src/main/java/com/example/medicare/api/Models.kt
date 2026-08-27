@@ -58,7 +58,9 @@ data class AccessibilitySettings(
 data class EmergencyContact(
     val name: String,
     val relationship: String,
-    val phone: String
+    val phone: String,
+    @SerializedName("country_code") val countryCode: String? = null,
+    @SerializedName("phone_national") val phoneNational: String? = null
 )
 
 data class MedicalInformation(
@@ -82,7 +84,9 @@ data class PatientProfile(
     @SerializedName("medical_information") val medicalInformation: MedicalInformation?,
     @SerializedName("onboarding_status") val onboardingStatus: String?,
     @SerializedName("completion_percentage") val completionPercentage: Int?,
-    @SerializedName("accessibility_settings") val accessibilitySettings: AccessibilitySettings?
+    @SerializedName("accessibility_settings") val accessibilitySettings: AccessibilitySettings?,
+    @SerializedName("phone_country_code") val phoneCountryCode: String? = null,
+    @SerializedName("phone_national") val phoneNational: String? = null
 )
 
 data class ProfileResponse(
@@ -101,7 +105,9 @@ data class UpdateProfileRequest(
     val address: String,
     @SerializedName("medical_information") val medicalInformation: MedicalInformation,
     @SerializedName("onboarding_status") val onboardingStatus: String,
-    @SerializedName("accessibility_settings") val accessibilitySettings: AccessibilitySettings
+    @SerializedName("accessibility_settings") val accessibilitySettings: AccessibilitySettings,
+    @SerializedName("phone_country_code") val phoneCountryCode: String?,
+    @SerializedName("phone_national") val phoneNational: String?
 )
 
 // Medicine DTOs

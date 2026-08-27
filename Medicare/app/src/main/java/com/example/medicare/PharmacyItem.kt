@@ -10,5 +10,6 @@ data class PharmacyItem(
     val address: String,
     val phoneNumber: String? = null,
     val website: String? = null,
-    val isOpen: Boolean? = null
+    val isOpen: Boolean? = null,
+    val isMock: Boolean = false
 )

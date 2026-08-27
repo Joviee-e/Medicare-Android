@@ -106,19 +106,42 @@
                     android:textColor="@color/text_secondary"
                     android:letterSpacing="0.1" />
 
-                <EditText
-                    android:id="@+id/input_ob_phone"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="54dp"
-                    android:layout_marginTop="6dp"
-                    android:hint="enter phone number"
-                    android:textColorHint="@color/neutral_gray"
-                    android:textColor="@color/text_primary"
-                    android:background="@drawable/bg_input_selector"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:inputType="phone"
-                    android:textSize="15sp" />
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="6dp">
+
+                    <TextView
+                        android:id="@+id/btn_ob_phone_country"
+                        android:layout_width="wrap_content"
+                        android:layout_height="54dp"
+                        android:background="@drawable/bg_input_selector"
+                        android:gravity="center"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:text="🇮🇳 +91"
+                        android:textColor="@color/text_primary"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                    <EditText
+                        android:id="@+id/input_ob_phone"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="54dp"
+                        android:layout_marginStart="8dp"
+                        android:hint="enter phone number"
+                        android:textColorHint="@color/neutral_gray"
+                        android:textColor="@color/text_primary"
+                        android:background="@drawable/bg_input_selector"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:inputType="phone"
+                        android:textSize="15sp" />
+                </LinearLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -233,14 +256,160 @@
                     android:textColor="@color/text_secondary"
                     android:letterSpacing="0.1" />
 
-                <Spinner
-                    android:id="@+id/spinner_ob_blood"
+                <LinearLayout
+                    android:id="@+id/layout_ob_blood_container"
                     android:layout_width="match_parent"
-                    android:layout_height="54dp"
-                    android:layout_marginTop="6dp"
-                    android:background="@drawable/bg_input_selector"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp" />
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="6dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:id="@+id/chip_blood_o_pos"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            android:text="O+"
+                            android:gravity="center"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:background="@drawable/bg_chip_unselected"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp"
+                            android:paddingTop="12dp"
+                            android:paddingBottom="12dp"
+                            android:clickable="true"
+                            android:focusable="true" />
+                        <TextView
+                            android:id="@+id/chip_blood_o_neg"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            android:text="O-"
+                            android:gravity="center"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:background="@drawable/bg_chip_unselected"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp"
+                            android:paddingTop="12dp"
+                            android:paddingBottom="12dp"
+                            android:layout_marginStart="8dp"
+                            android:clickable="true"
+                            android:focusable="true" />
+                        <TextView
+                            android:id="@+id/chip_blood_a_pos"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            android:text="A+"
+                            android:gravity="center"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:background="@drawable/bg_chip_unselected"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp"
+                            android:paddingTop="12dp"
+                            android:paddingBottom="12dp"
+                            android:layout_marginStart="8dp"
+                            android:clickable="true"
+                            android:focusable="true" />
+                        <TextView
+                            android:id="@+id/chip_blood_a_neg"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            android:text="A-"
+                            android:gravity="center"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:background="@drawable/bg_chip_unselected"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp"
+                            android:paddingTop="12dp"
+                            android:paddingBottom="12dp"
+                            android:layout_marginStart="8dp"
+                            android:clickable="true"
+                            android:focusable="true" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="8dp">
+                        <TextView
+                            android:id="@+id/chip_blood_b_pos"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            android:text="B+"
+                            android:gravity="center"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:background="@drawable/bg_chip_unselected"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp"
+                            android:paddingTop="12dp"
+                            android:paddingBottom="12dp"
+                            android:clickable="true"
+                            android:focusable="true" />
+                        <TextView
+                            android:id="@+id/chip_blood_b_neg"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            android:text="B-"
+                            android:gravity="center"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:background="@drawable/bg_chip_unselected"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp"
+                            android:paddingTop="12dp"
+                            android:paddingBottom="12dp"
+                            android:layout_marginStart="8dp"
+                            android:clickable="true"
+                            android:focusable="true" />
+                        <TextView
+                            android:id="@+id/chip_blood_ab_pos"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            android:text="AB+"
+                            android:gravity="center"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:background="@drawable/bg_chip_unselected"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp"
+                            android:paddingTop="12dp"
+                            android:paddingBottom="12dp"
+                            android:layout_marginStart="8dp"
+                            android:clickable="true"
+                            android:focusable="true" />
+                        <TextView
+                            android:id="@+id/chip_blood_ab_neg"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            android:text="AB-"
+                            android:gravity="center"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:background="@drawable/bg_chip_unselected"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp"
+                            android:paddingTop="12dp"
+                            android:paddingBottom="12dp"
+                            android:layout_marginStart="8dp"
+                            android:clickable="true"
+                            android:focusable="true" />
+                    </LinearLayout>
+                </LinearLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -379,19 +548,42 @@
                     android:letterSpacing="0.1"
                     android:layout_marginTop="20dp" />
 
-                <EditText
-                    android:id="@+id/input_ob_emerg_phone"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="54dp"
-                    android:layout_marginTop="6dp"
-                    android:hint="enter emergency phone"
-                    android:textColorHint="@color/neutral_gray"
-                    android:textColor="@color/text_primary"
-                    android:background="@drawable/bg_input_selector"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:inputType="phone"
-                    android:textSize="15sp" />
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="6dp">
+
+                    <TextView
+                        android:id="@+id/btn_ob_emerg_phone_country"
+                        android:layout_width="wrap_content"
+                        android:layout_height="54dp"
+                        android:background="@drawable/bg_input_selector"
+                        android:gravity="center"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:text="🇮🇳 +91"
+                        android:textColor="@color/text_primary"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                    <EditText
+                        android:id="@+id/input_ob_emerg_phone"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="54dp"
+                        android:layout_marginStart="8dp"
+                        android:hint="enter emergency phone"
+                        android:textColorHint="@color/neutral_gray"
+                        android:textColor="@color/text_primary"
+                        android:background="@drawable/bg_input_selector"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:inputType="phone"
+                        android:textSize="15sp" />
+                </LinearLayout>
 
             </LinearLayout>
 

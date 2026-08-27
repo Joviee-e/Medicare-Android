@@ -179,7 +179,8 @@ class PatientModel:
     def update_profile(user_id: str, name: str, blood_group: str,
                        emergency_contacts: list, date_of_birth: str, age: str,
                        gender: str, phone: str, address: str, medical_information: dict,
-                       onboarding_status: str, accessibility_settings: dict) -> bool:
+                       onboarding_status: str, accessibility_settings: dict,
+                       phone_country_code: str = "", phone_national: str = "") -> bool:
         """Update patient details and accessibility parameters."""
         patients_col = get_patients_collection()
         now = datetime.utcnow()
@@ -191,7 +192,9 @@ class PatientModel:
                 formatted_contacts.append({
                     "name": c.get("name", "").strip(),
                     "relationship": c.get("relationship", "").strip(),
-                    "phone": c.get("phone", "").strip()
+                    "phone": c.get("phone", "").strip(),
+                    "country_code": c.get("country_code", "").strip() if c.get("country_code") else "",
+                    "phone_national": c.get("phone_national", "").strip() if c.get("phone_national") else ""
                 })
         
         # Keep deprecated fields synchronized to prevent breaking older layouts
@@ -211,6 +214,8 @@ class PatientModel:
             "age": age,
             "gender": gender,
             "phone": phone,
+            "phone_country_code": phone_country_code,
+            "phone_national": phone_national,
             "address": address,
             "medical_information": {
                 "allergies": medical_information.get("allergies", "").strip() if medical_information else "",

@@ -33,12 +33,20 @@ class OnboardingActivity : BaseActivity() {
 
     // Step 1 Fields
     private lateinit var inputPhone: EditText
+    private lateinit var btnObPhoneCountry: TextView
+    private var selectedUserCountry = PhoneNumberHelper.supportedCountries[0]
     private lateinit var inputDob: EditText
     private lateinit var inputAge: EditText
     private lateinit var rgGender: RadioGroup
 
     // Step 2 Fields
-    private lateinit var spinnerBlood: Spinner
+    private var selectedBloodGroup: String = "O+"
+    private val bloodChipIds = listOf(
+        R.id.chip_blood_o_pos, R.id.chip_blood_o_neg,
+        R.id.chip_blood_a_pos, R.id.chip_blood_a_neg,
+        R.id.chip_blood_b_pos, R.id.chip_blood_b_neg,
+        R.id.chip_blood_ab_pos, R.id.chip_blood_ab_neg
+    )
     private lateinit var inputAllergies: EditText
     private lateinit var inputConditions: EditText
     private lateinit var inputMedications: EditText
@@ -47,6 +55,8 @@ class OnboardingActivity : BaseActivity() {
     private lateinit var inputEmergName: EditText
     private lateinit var spinnerEmergRel: Spinner
     private lateinit var inputEmergPhone: EditText
+    private lateinit var btnObEmergPhoneCountry: TextView
+    private var selectedEmergCountry = PhoneNumberHelper.supportedCountries[0]
 
     // Step 4 Fields
     private lateinit var inputAddress: EditText
@@ -77,11 +87,23 @@ class OnboardingActivity : BaseActivity() {
         progressLoader = findViewById(R.id.progress_onboarding)
 
         inputPhone = findViewById(R.id.input_ob_phone)
+        btnObPhoneCountry = findViewById(R.id.btn_ob_phone_country)
+        btnObPhoneCountry.text = getCountryLabel(selectedUserCountry)
+        btnObPhoneCountry.setOnClickListener {
+            PhoneNumberHelper.showCountryPickerDialog(this) { country ->
+                selectedUserCountry = country
+                btnObPhoneCountry.text = getCountryLabel(country)
+                validateUserPhone(showError = false)
+            }
+        }
+        inputPhone.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) validateUserPhone(showError = true)
+        }
+
         inputDob = findViewById(R.id.input_ob_dob)
         inputAge = findViewById(R.id.input_ob_age)
         rgGender = findViewById(R.id.rg_ob_gender)
 
-        spinnerBlood = findViewById(R.id.spinner_ob_blood)
         inputAllergies = findViewById(R.id.input_ob_allergies)
         inputConditions = findViewById(R.id.input_ob_conditions)
         inputMedications = findViewById(R.id.input_ob_medications)
@@ -89,6 +111,18 @@ class OnboardingActivity : BaseActivity() {
         inputEmergName = findViewById(R.id.input_ob_emerg_name)
         spinnerEmergRel = findViewById(R.id.spinner_ob_emerg_rel)
         inputEmergPhone = findViewById(R.id.input_ob_emerg_phone)
+        btnObEmergPhoneCountry = findViewById(R.id.btn_ob_emerg_phone_country)
+        btnObEmergPhoneCountry.text = getCountryLabel(selectedEmergCountry)
+        btnObEmergPhoneCountry.setOnClickListener {
+            PhoneNumberHelper.showCountryPickerDialog(this) { country ->
+                selectedEmergCountry = country
+                btnObEmergPhoneCountry.text = getCountryLabel(country)
+                validateEmergPhone(showError = false)
+            }
+        }
+        inputEmergPhone.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) validateEmergPhone(showError = true)
+        }
 
         inputAddress = findViewById(R.id.input_ob_address)
 
@@ -96,8 +130,8 @@ class OnboardingActivity : BaseActivity() {
         btnNext = findViewById(R.id.btn_ob_next)
         btnSkipAll = findViewById(R.id.btn_skip_onboarding)
 
-        // Setup Spinners
-        spinnerBlood.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, bloodGroups)
+        // Setup Spinners and Chips
+        setupBloodGroupChips()
         spinnerEmergRel.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, relationships)
 
         // Setup DOB Picker dialog trigger
@@ -167,7 +201,19 @@ class OnboardingActivity : BaseActivity() {
 
     private fun prepopulateFields() {
         existingProfile?.let { profile ->
-            inputPhone.setText(profile.phone ?: "")
+            inputPhone.setText(profile.phoneNational ?: profile.phone ?: "")
+            profile.phoneCountryCode?.let { code ->
+                selectedUserCountry = PhoneNumberHelper.getCountryByCode(code)
+                btnObPhoneCountry.text = getCountryLabel(selectedUserCountry)
+            } ?: run {
+                profile.phone?.let { full ->
+                    PhoneNumberHelper.parseInternationalNumber(full)?.let { pair ->
+                        selectedUserCountry = pair.first
+                        btnObPhoneCountry.text = getCountryLabel(selectedUserCountry)
+                        inputPhone.setText(pair.second)
+                    }
+                }
+            }
             inputDob.setText(profile.dateOfBirth ?: "")
             inputAge.setText(profile.age ?: "")
             
@@ -177,8 +223,8 @@ class OnboardingActivity : BaseActivity() {
                 "other" -> rgGender.check(R.id.rb_gender_other)
             }
 
-            val bloodIdx = bloodGroups.indexOf(profile.bloodGroup ?: "O+")
-            if (bloodIdx >= 0) spinnerBlood.setSelection(bloodIdx)
+            selectedBloodGroup = profile.bloodGroup ?: "O+"
+            updateBloodGroupSelection()
 
             inputAllergies.setText(profile.medicalInformation?.allergies ?: "")
             inputConditions.setText(profile.medicalInformation?.conditions ?: "")
@@ -186,7 +232,21 @@ class OnboardingActivity : BaseActivity() {
 
             val primaryContact = profile.emergencyContacts?.firstOrNull()
             inputEmergName.setText(primaryContact?.name ?: profile.emergencyContactName ?: "")
-            inputEmergPhone.setText(primaryContact?.phone ?: profile.emergencyContactPhone ?: "")
+            val primaryEmergPhone = primaryContact?.phone ?: profile.emergencyContactPhone ?: ""
+            val primaryEmergCountry = primaryContact?.countryCode ?: ""
+            val primaryEmergNational = primaryContact?.phoneNational ?: ""
+
+            inputEmergPhone.setText(primaryEmergNational.ifEmpty { primaryEmergPhone })
+            if (primaryEmergCountry.isNotEmpty()) {
+                selectedEmergCountry = PhoneNumberHelper.getCountryByCode(primaryEmergCountry)
+                btnObEmergPhoneCountry.text = getCountryLabel(selectedEmergCountry)
+            } else if (primaryEmergPhone.isNotEmpty()) {
+                PhoneNumberHelper.parseInternationalNumber(primaryEmergPhone)?.let { pair ->
+                    selectedEmergCountry = pair.first
+                    btnObEmergPhoneCountry.text = getCountryLabel(selectedEmergCountry)
+                    inputEmergPhone.setText(pair.second)
+                }
+            }
             
             val relIdx = relationships.indexOf(primaryContact?.relationship ?: "Family")
             if (relIdx >= 0) spinnerEmergRel.setSelection(relIdx)
@@ -214,7 +274,7 @@ class OnboardingActivity : BaseActivity() {
         }
 
         // Step 2 fields
-        var bloodGroup = spinnerBlood.selectedItem.toString()
+        var bloodGroup = selectedBloodGroup
         var allergies = inputAllergies.text.toString().trim()
         var conditions = inputConditions.text.toString().trim()
         var medications = inputMedications.text.toString().trim()
@@ -231,8 +291,7 @@ class OnboardingActivity : BaseActivity() {
             // Apply current validation rule triggers
             when (currentStep) {
                 1 -> {
-                    if (phone.isEmpty()) {
-                        inputPhone.error = "Phone number is required"
+                    if (!validateUserPhone(showError = true)) {
                         return
                     }
                     if (dob.isEmpty()) {
@@ -249,8 +308,7 @@ class OnboardingActivity : BaseActivity() {
                         inputEmergName.error = "Contact name is required"
                         return
                     }
-                    if (emergPhone.isEmpty()) {
-                        inputEmergPhone.error = "Contact phone is required"
+                    if (!validateEmergPhone(showError = true)) {
                         return
                     }
                 }
@@ -271,7 +329,14 @@ class OnboardingActivity : BaseActivity() {
         // Build list of emergency contacts
         val contactsList = mutableListOf<EmergencyContact>()
         if (emergName.isNotEmpty() || emergPhone.isNotEmpty()) {
-            contactsList.add(EmergencyContact(emergName, emergRel, emergPhone))
+            val normalizedEmerg = PhoneNumberHelper.getNormalizedNumber(emergPhone, selectedEmergCountry.code) ?: emergPhone
+            contactsList.add(EmergencyContact(
+                name = emergName,
+                relationship = emergRel,
+                phone = normalizedEmerg,
+                countryCode = selectedEmergCountry.code,
+                phoneNational = emergPhone
+            ))
         } else {
             // Copy existing contacts if empty
             existingProfile?.emergencyContacts?.let { contactsList.addAll(it) }
@@ -280,6 +345,10 @@ class OnboardingActivity : BaseActivity() {
         val settings = AccessibilitySettings(contrastMode, voiceInput, hapticFeedback, fontSize)
         val medical = MedicalInformation(allergies, conditions, medications)
 
+        val normalizedPhone = PhoneNumberHelper.getNormalizedNumber(phone, selectedUserCountry.code) ?: phone
+        val phoneNational = phone
+        val phoneCountryCode = selectedUserCountry.code
+
         val request = UpdateProfileRequest(
             name = name,
             bloodGroup = bloodGroup,
@@ -287,11 +356,13 @@ class OnboardingActivity : BaseActivity() {
             dateOfBirth = dob,
             age = age,
             gender = gender,
-            phone = phone,
+            phone = normalizedPhone,
             address = address,
             medicalInformation = medical,
             onboardingStatus = nextStatus,
-            accessibilitySettings = settings
+            accessibilitySettings = settings,
+            phoneCountryCode = phoneCountryCode,
+            phoneNational = phoneNational
         )
 
         setLoading(true)
@@ -326,7 +397,7 @@ class OnboardingActivity : BaseActivity() {
     private fun saveOnboardingStateAndExit(status: String) {
         // Fetches profile name and metadata to update onboarding status only
         val name = existingProfile?.name ?: sessionManager.getUserName() ?: "Patient"
-        val bloodGroup = existingProfile?.bloodGroup ?: "O+"
+        val bloodGroup = existingProfile?.bloodGroup ?: selectedBloodGroup
         val dob = existingProfile?.dateOfBirth ?: ""
         val age = existingProfile?.age ?: ""
         val gender = existingProfile?.gender ?: ""
@@ -356,7 +427,9 @@ class OnboardingActivity : BaseActivity() {
             address = address,
             medicalInformation = medical,
             onboardingStatus = status,
-            accessibilitySettings = settings
+            accessibilitySettings = settings,
+            phoneCountryCode = existingProfile?.phoneCountryCode,
+            phoneNational = existingProfile?.phoneNational
         )
 
         setLoading(true)
@@ -432,5 +505,76 @@ class OnboardingActivity : BaseActivity() {
             btnSkip.isEnabled = true
             progressLoader.visibility = View.GONE
         }
+    }
+
+    private fun setupBloodGroupChips() {
+        for (id in bloodChipIds) {
+            val chip = findViewById<TextView>(id) ?: continue
+            chip.setOnClickListener {
+                selectedBloodGroup = chip.text.toString()
+                updateBloodGroupSelection()
+            }
+        }
+        updateBloodGroupSelection()
+    }
+
+    private fun updateBloodGroupSelection() {
+        for (id in bloodChipIds) {
+            val chip = findViewById<TextView>(id) ?: continue
+            if (chip.text.toString() == selectedBloodGroup) {
+                chip.setBackgroundResource(R.drawable.bg_chip_selected)
+                chip.setTextColor(resources.getColor(R.color.white, null))
+                chip.setTypeface(null, android.graphics.Typeface.BOLD)
+            } else {
+                chip.setBackgroundResource(R.drawable.bg_chip_unselected)
+                chip.setTextColor(resources.getColor(R.color.text_primary, null))
+                chip.setTypeface(null, android.graphics.Typeface.NORMAL)
+            }
+        }
+    }
+
+    private fun getCountryLabel(country: PhoneNumberHelper.Country): String {
+        val flag = country.name.split(" ")[0]
+        return "$flag ${country.callingCode}"
+    }
+
+    private fun validateUserPhone(showError: Boolean): Boolean {
+        val phone = inputPhone.text.toString().trim()
+        if (phone.isEmpty()) {
+            if (showError) inputPhone.error = "Phone number is required"
+            return false
+        }
+        val isValid = PhoneNumberHelper.isValidNumber(phone, selectedUserCountry.code)
+        if (!isValid) {
+            if (showError) inputPhone.error = "Enter a valid phone number for selected country"
+            return false
+        }
+        val formatted = PhoneNumberHelper.formatNationalNumber(phone, selectedUserCountry.code)
+        if (formatted != phone) {
+            inputPhone.setText(formatted)
+            inputPhone.setSelection(formatted.length)
+        }
+        inputPhone.error = null
+        return true
+    }
+
+    private fun validateEmergPhone(showError: Boolean): Boolean {
+        val phone = inputEmergPhone.text.toString().trim()
+        if (phone.isEmpty()) {
+            if (showError) inputEmergPhone.error = "Emergency phone is required"
+            return false
+        }
+        val isValid = PhoneNumberHelper.isValidNumber(phone, selectedEmergCountry.code)
+        if (!isValid) {
+            if (showError) inputEmergPhone.error = "Enter a valid phone number for selected country"
+            return false
+        }
+        val formatted = PhoneNumberHelper.formatNationalNumber(phone, selectedEmergCountry.code)
+        if (formatted != phone) {
+            inputEmergPhone.setText(formatted)
+            inputEmergPhone.setSelection(formatted.length)
+        }
+        inputEmergPhone.error = null
+        return true
     }
 }

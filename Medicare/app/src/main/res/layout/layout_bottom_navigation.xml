@@ -38,6 +38,8 @@
                 android:text="Home"
                 android:textSize="12sp"
                 android:textColor="@color/text_secondary"
+                android:singleLine="true"
+                android:ellipsize="end"
                 android:layout_marginTop="4dp" />
         </LinearLayout>
         <LinearLayout
@@ -98,6 +100,8 @@
                 android:text="Medicines"
                 android:textSize="12sp"
                 android:textColor="@color/text_secondary"
+                android:singleLine="true"
+                android:ellipsize="end"
                 android:layout_marginTop="4dp" />
         </LinearLayout>
         <LinearLayout
@@ -158,6 +162,8 @@
                 android:text="Pharmacy"
                 android:textSize="12sp"
                 android:textColor="@color/text_secondary"
+                android:singleLine="true"
+                android:ellipsize="end"
                 android:layout_marginTop="4dp" />
         </LinearLayout>
         <LinearLayout
@@ -218,6 +224,8 @@
                 android:text="AI Assistant"
                 android:textSize="12sp"
                 android:textColor="@color/text_secondary"
+                android:singleLine="true"
+                android:ellipsize="end"
                 android:layout_marginTop="4dp" />
         </LinearLayout>
         <LinearLayout
@@ -278,6 +286,8 @@
                 android:text="Profile"
                 android:textSize="12sp"
                 android:textColor="@color/text_secondary"
+                android:singleLine="true"
+                android:ellipsize="end"
                 android:layout_marginTop="4dp" />
         </LinearLayout>
         <LinearLayout

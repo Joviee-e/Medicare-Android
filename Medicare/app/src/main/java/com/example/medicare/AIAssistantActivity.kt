@@ -27,6 +27,21 @@ class AIAssistantActivity : BaseActivity() {
         // Setup custom bottom navigation
         NavigationHelper.setupNavigation(this, R.id.tab_ai)
 
+        // Hide bottom navigation when keyboard is open to prevent visual compression/misalignment
+        val rootView = findViewById<android.view.View>(android.R.id.content)
+        val bottomNav = findViewById<android.view.View>(R.id.bottom_navigation)
+        rootView.viewTreeObserver.addOnGlobalLayoutListener {
+            val rect = android.graphics.Rect()
+            rootView.getWindowVisibleDisplayFrame(rect)
+            val screenHeight = rootView.rootView.height
+            val keypadHeight = screenHeight - rect.bottom
+            if (keypadHeight > screenHeight * 0.15) {
+                bottomNav.visibility = android.view.View.GONE
+            } else {
+                bottomNav.visibility = android.view.View.VISIBLE
+            }
+        }
+
         // Setup chat RecyclerView
         recyclerChat = findViewById(R.id.recycler_chat)
         recyclerChat.layoutManager = LinearLayoutManager(this)
