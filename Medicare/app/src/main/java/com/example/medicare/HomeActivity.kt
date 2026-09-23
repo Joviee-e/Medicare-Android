@@ -72,9 +72,9 @@ class HomeActivity : BaseActivity() {
         val name = sessionManager.getUserName() ?: "User"
         txtGreeting.text = "Good Morning, $name"
 
-        // Notification Bell Toast trigger
+        // Notification Bell trigger
         findViewById<ImageView>(R.id.btn_notification)?.setOnClickListener {
-            Toast.makeText(this, "Notifications coming soon", Toast.LENGTH_SHORT).show()
+            NotificationHelper.show(this)
         }
 
         // View All click -> starts MedicinesActivity

@@ -188,5 +188,25 @@ class BackendTestCase(unittest.TestCase):
         })
         self.assertEqual(response.status_code, 400)
 
+    # ================= ROOT & HEALTH TESTS =================
+    def test_root_welcome(self):
+        response = self.client.get('/')
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertTrue(data['success'])
+        self.assertEqual(data['message'], "MediCare+ Backend API is running")
+
+    def test_api_welcome(self):
+        response = self.client.get('/api')
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertTrue(data['success'])
+
+    def test_api_slash_welcome(self):
+        response = self.client.get('/api/')
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertTrue(data['success'])
+
 if __name__ == '__main__':
     unittest.main()

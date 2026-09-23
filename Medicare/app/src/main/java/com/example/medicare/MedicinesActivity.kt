@@ -3,6 +3,7 @@ package com.example.medicare
 import android.content.Intent
 import android.graphics.Typeface
 import android.os.Bundle
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -32,6 +33,11 @@ class MedicinesActivity : BaseActivity() {
 
         // Setup custom bottom navigation
         NavigationHelper.setupNavigation(this, R.id.tab_medicines)
+
+        // Notification Bell trigger
+        findViewById<ImageView>(R.id.btn_notification)?.setOnClickListener {
+            NotificationHelper.show(this)
+        }
 
         // Setup RecyclerView
         val recyclerMedicines = findViewById<RecyclerView>(R.id.recycler_medicines)

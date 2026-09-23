@@ -9,17 +9,18 @@ object PhoneNumberHelper {
     data class Country(
         val code: String,       // ISO Country Code, e.g. "IN"
         val name: String,       // Display Name, e.g. "🇮🇳 India"
-        val callingCode: String // Calling Prefix, e.g. "+91"
+        val callingCode: String, // Calling Prefix, e.g. "+91"
+        val nationalDigits: Int // National number digits limit (e.g. 10 for India)
     )
 
     val supportedCountries = listOf(
-        Country("IN", "🇮🇳 India", "+91"),
-        Country("US", "🇺🇸 United States", "+1"),
-        Country("GB", "🇬🇧 United Kingdom", "+44"),
-        Country("CA", "🇨🇦 Canada", "+1"),
-        Country("AU", "🇦🇺 Australia", "+61"),
-        Country("DE", "🇩🇪 Germany", "+49"),
-        Country("SG", "🇸🇬 Singapore", "+65")
+        Country("IN", "🇮🇳 India", "+91", 10),
+        Country("US", "🇺🇸 United States", "+1", 10),
+        Country("GB", "🇬🇧 United Kingdom", "+44", 10),
+        Country("CA", "🇨🇦 Canada", "+1", 10),
+        Country("AU", "🇦🇺 Australia", "+61", 9),
+        Country("DE", "🇩🇪 Germany", "+49", 11),
+        Country("SG", "🇸🇬 Singapore", "+65", 8)
     )
 
     private val phoneUtil: PhoneNumberUtil by lazy {
@@ -101,7 +102,7 @@ object PhoneNumberHelper {
             val proto: PhoneNumber = phoneUtil.parse(clean, null)
             val regionCode = phoneUtil.getRegionCodeForNumber(proto) ?: return null
             val country = supportedCountries.firstOrNull { it.code.equals(regionCode, ignoreCase = true) }
-                ?: Country(regionCode, Locale("", regionCode).displayCountry, "+${proto.countryCode}")
+                ?: Country(regionCode, Locale("", regionCode).displayCountry, "+${proto.countryCode}", 10)
             val national = proto.nationalNumber.toString()
             Pair(country, national)
         } catch (e: Exception) {
@@ -121,4 +122,40 @@ object PhoneNumberHelper {
             }
             .show()
     }
+
+    /**
+     * Applies a strict country-specific length filter and digits-only filter to an EditText.
+     * Physically prevents entering more than the allowed national digits for the country (e.g. 10 for India).
+     * If the current content exceeds the new limit, it truncates the excess digits.
+     */
+    fun applyCountryInputFilter(editText: android.widget.EditText, country: Country) {
+        val digitFilter = android.text.InputFilter { source, start, end, _, _, _ ->
+            for (i in start until end) {
+                if (!Character.isDigit(source[i])) {
+                    return@InputFilter ""
+                }
+            }
+            null
+        }
+        val lengthFilter = android.text.InputFilter.LengthFilter(country.nationalDigits)
+        editText.filters = arrayOf(digitFilter, lengthFilter)
+
+        // Truncate if existing text exceeds country's digit limit
+        val currentDigits = editText.text.toString().filter { it.isDigit() }
+        if (currentDigits.length > country.nationalDigits) {
+            val truncated = currentDigits.substring(0, country.nationalDigits)
+            editText.setText(truncated)
+            editText.setSelection(truncated.length)
+        }
+        editText.hint = "enter ${country.nationalDigits}-digit number"
+    }
+
+    /**
+     * Checks if the clean national digits match the exact required digit count for the country.
+     */
+    fun hasExactNationalDigits(number: String, country: Country): Boolean {
+        val digits = number.filter { it.isDigit() }
+        return digits.length == country.nationalDigits
+    }
 }
+

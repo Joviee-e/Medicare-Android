@@ -51,6 +51,22 @@ def create_app():
     app.register_blueprint(medicine_bp, url_prefix='/api/medicines')
     app.register_blueprint(appointment_bp, url_prefix='/api/appointments')
 
+    # URL Routing configurations: allow trailing slashes flexibly
+    app.url_map.strict_slashes = False
+
+    # Root & API Welcome Endpoints
+    @app.route('/', methods=['GET'])
+    @app.route('/api', methods=['GET'])
+    @app.route('/api/', methods=['GET'])
+    def root_welcome():
+        return jsonify({
+            "success": True,
+            "message": "MediCare+ Backend API is running",
+            "health": "/health",
+            "api_health": "/api/health",
+            "environment": Config.FLASK_ENV
+        }), 200
+
     # Health Check API
     @app.route('/health', methods=['GET'])
     @app.route('/api/health', methods=['GET'])

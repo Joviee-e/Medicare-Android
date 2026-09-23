@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
+import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -19,10 +20,14 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.medicare.api.*
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import com.google.android.material.chip.Chip
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.geometry.LatLng
+import com.mapbox.mapboxsdk.location.LocationComponentActivationOptions
+import com.mapbox.mapboxsdk.location.modes.CameraMode
+import com.mapbox.mapboxsdk.location.modes.RenderMode
 import com.mapbox.mapboxsdk.maps.MapView
 import com.mapbox.mapboxsdk.maps.MapboxMap as MapLibreMap
 import com.mapbox.mapboxsdk.maps.Style
@@ -46,13 +51,9 @@ class PharmacyActivity : BaseActivity() {
     private lateinit var txtSubtitle: TextView
     private lateinit var inputSearch: EditText
 
-    // Search radius in meters
-    private var searchRadius = 5000.0
-
     // Selected place category filter
     private var selectedCategory = "healthcare.pharmacy"
     private var selectedCategoryName = "Pharmacies"
-    private val USE_FALLBACK_DATA = true
 
     // Cache of markers to link selection
     private val markerMap = HashMap<String, Marker>()
@@ -68,7 +69,10 @@ class PharmacyActivity : BaseActivity() {
         val coarseGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
 
         if (fineGranted || coarseGranted) {
-            setupLocationEnabledMap()
+            if (::mapLibreMap.isInitialized) {
+                mapLibreMap.style?.let { enableLocationComponent(it) }
+            }
+            setupLocationEnabledMap(zoomToUser = true)
         } else {
             Toast.makeText(this, "Location permission is required to automatically locate healthcare facilities.", Toast.LENGTH_LONG).show()
             showPermissionDeniedMessage()
@@ -132,7 +136,8 @@ class PharmacyActivity : BaseActivity() {
 
             // Load Geoapify Osm-Bright Map Style
             val styleUrl = "https://maps.geoapify.com/v1/styles/osm-bright/style.json?apiKey=${BuildConfig.GEOAPIFY_API_KEY}"
-            map.setStyle(styleUrl) {
+            map.setStyle(styleUrl) { style ->
+                enableLocationComponent(style)
                 checkPermissionsAndFetchLocation(zoomToUser = true)
             }
         }
@@ -142,6 +147,9 @@ class PharmacyActivity : BaseActivity() {
 
         // Location target button
         findViewById<View>(R.id.btn_my_location)?.setOnClickListener {
+            if (::mapLibreMap.isInitialized) {
+                mapLibreMap.style?.let { enableLocationComponent(it) }
+            }
             checkPermissionsAndFetchLocation(zoomToUser = true)
         }
 
@@ -167,12 +175,31 @@ class PharmacyActivity : BaseActivity() {
 
         // Notification bell click trigger
         findViewById<ImageView>(R.id.btn_notification)?.setOnClickListener {
-            Toast.makeText(this, "Notifications coming soon", Toast.LENGTH_SHORT).show()
+            NotificationHelper.show(this)
         }
 
         // Back button navigation
         findViewById<ImageView>(R.id.btn_back)?.setOnClickListener {
             finish()
+        }
+    }
+
+    private fun enableLocationComponent(loadedMapStyle: Style) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            try {
+                val locationComponent = mapLibreMap.locationComponent
+                val locationComponentActivationOptions = LocationComponentActivationOptions
+                    .builder(this, loadedMapStyle)
+                    .useDefaultLocationEngine(true)
+                    .build()
+                locationComponent.activateLocationComponent(locationComponentActivationOptions)
+                locationComponent.isLocationComponentEnabled = true
+                locationComponent.cameraMode = CameraMode.NONE
+                locationComponent.renderMode = RenderMode.COMPASS
+            } catch (e: Exception) {
+                // If location engine is not available, ignore gracefully
+            }
         }
     }
 
@@ -188,23 +215,64 @@ class PharmacyActivity : BaseActivity() {
     }
 
     private fun setupLocationEnabledMap(zoomToUser: Boolean = true) {
+        if (::mapLibreMap.isInitialized) {
+            mapLibreMap.style?.let { enableLocationComponent(it) }
+        }
+
         try {
-            fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
-                if (location != null) {
-                    currentLatLng = LatLng(location.latitude, location.longitude)
-                    if (zoomToUser && ::mapLibreMap.isInitialized) {
-                        mapLibreMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng!!, 15.0))
+            fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                .addOnSuccessListener { location: Location? ->
+                    if (location != null) {
+                        onLocationAcquired(location, zoomToUser)
+                    } else {
+                        fusedLocationClient.lastLocation.addOnSuccessListener { lastLoc: Location? ->
+                            if (lastLoc != null) {
+                                onLocationAcquired(lastLoc, zoomToUser)
+                            } else {
+                                tryLocationManagerFallback(zoomToUser)
+                            }
+                        }.addOnFailureListener {
+                            tryLocationManagerFallback(zoomToUser)
+                        }
                     }
-                    performNearbySearch()
-                } else {
-                    fallbackDefaultLocation()
+                }.addOnFailureListener {
+                    fusedLocationClient.lastLocation.addOnSuccessListener { lastLoc: Location? ->
+                        if (lastLoc != null) {
+                            onLocationAcquired(lastLoc, zoomToUser)
+                        } else {
+                            tryLocationManagerFallback(zoomToUser)
+                        }
+                    }.addOnFailureListener {
+                        tryLocationManagerFallback(zoomToUser)
+                    }
                 }
-            }.addOnFailureListener {
+        } catch (e: SecurityException) {
+            tryLocationManagerFallback(zoomToUser)
+        }
+    }
+
+    private fun tryLocationManagerFallback(zoomToUser: Boolean) {
+        try {
+            val locationManager = getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+            val gpsLoc = locationManager?.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+            val netLoc = locationManager?.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+            val bestLoc = gpsLoc ?: netLoc
+            if (bestLoc != null) {
+                onLocationAcquired(bestLoc, zoomToUser)
+            } else {
                 fallbackDefaultLocation()
             }
         } catch (e: SecurityException) {
             fallbackDefaultLocation()
         }
+    }
+
+    private fun onLocationAcquired(location: Location, zoomToUser: Boolean) {
+        currentLatLng = LatLng(location.latitude, location.longitude)
+        if (zoomToUser && ::mapLibreMap.isInitialized) {
+            mapLibreMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng!!, 15.0))
+        }
+        performNearbySearch()
     }
 
     private fun fallbackDefaultLocation() {
@@ -219,13 +287,13 @@ class PharmacyActivity : BaseActivity() {
             setCategoryFilter("healthcare.hospital", "Hospitals")
         }
         findViewById<Chip>(R.id.chip_clinic).setOnClickListener {
-            setCategoryFilter("healthcare.clinic_or_praxis", "Clinics")
+            setCategoryFilter("healthcare.clinic_or_praxis", "Doctors & Clinics")
         }
         findViewById<Chip>(R.id.chip_emergency).setOnClickListener {
-            setCategoryFilter("emergency.ambulance_station,emergency.emergency_ward_entrance,healthcare.hospital", "Emergencies")
+            setCategoryFilter("emergency.ambulance_station,healthcare.hospital", "Emergencies")
         }
         findViewById<Chip>(R.id.chip_lab).setOnClickListener {
-            setCategoryFilter("healthcare.laboratory", "Laboratories")
+            setCategoryFilter("healthcare.clinic_or_praxis.radiology,healthcare.clinic_or_praxis", "Laboratories")
         }
         findViewById<Chip>(R.id.chip_dentist).setOnClickListener {
             setCategoryFilter("healthcare.dentist", "Dentists")
@@ -235,7 +303,6 @@ class PharmacyActivity : BaseActivity() {
     private fun setCategoryFilter(category: String, name: String) {
         selectedCategory = category
         selectedCategoryName = name
-        searchRadius = 5000.0 // reset radius
         performNearbySearch()
     }
 
@@ -243,31 +310,24 @@ class PharmacyActivity : BaseActivity() {
         // Show loading progress
         progressLoading.visibility = View.VISIBLE
         txtHeader.text = "Nearby $selectedCategoryName"
-        txtSubtitle.text = "Showing results within ${(searchRadius / 1000).toInt()} km"
+        txtSubtitle.text = "Searching verified facilities..."
 
-        // Search around current map center target so panning works!
-        val searchCenter = if (::mapLibreMap.isInitialized) mapLibreMap.cameraPosition.target else currentLatLng
+        // Search around current user location, or current map center if user panned
+        val mapTarget = if (::mapLibreMap.isInitialized) mapLibreMap.cameraPosition?.target else null
+        val searchCenter = currentLatLng ?: if (mapTarget != null && mapTarget.latitude != 0.0) mapTarget else null
         if (searchCenter == null) {
             progressLoading.visibility = View.GONE
             showPermissionDeniedMessage()
             return
         }
 
-        val filterStr = "circle:${searchCenter.longitude},${searchCenter.latitude},$searchRadius"
         val biasStr = "proximity:${searchCenter.longitude},${searchCenter.latitude}"
-
-        // CLEAR old places and markers immediately to prevent stale results during loading
-        placeItemsList.clear()
-        if (::mapLibreMap.isInitialized) {
-            mapLibreMap.clear()
-        }
-        markerMap.clear()
 
         GeoapifyClient.getService().getNearbyPlaces(
             categories = selectedCategory,
-            filter = filterStr,
+            filter = null,
             bias = biasStr,
-            limit = 20,
+            limit = 50,
             name = if (keyword.isNullOrEmpty()) null else keyword,
             apiKey = BuildConfig.GEOAPIFY_API_KEY
         ).enqueue(object : Callback<GeoapifyPlacesResponse> {
@@ -277,44 +337,58 @@ class PharmacyActivity : BaseActivity() {
             ) {
                 progressLoading.visibility = View.GONE
                 val body = response.body()
-                
+
                 if (!response.isSuccessful || body == null) {
-                    if (USE_FALLBACK_DATA) {
-                        loadFallbackData(searchCenter)
-                    } else {
-                        showErrorResults()
-                    }
+                    showErrorResults()
                     return
                 }
 
                 val features = body.features
                 if (features.isEmpty()) {
-                    if (USE_FALLBACK_DATA) {
-                        loadFallbackData(searchCenter)
-                    } else {
-                        showEmptyResults()
-                    }
+                    showEmptyResults()
                     return
                 }
+
+                txtSubtitle.text = "Found ${features.size} verified facilities near you"
+
+                // Clear previous markers & list now that verified real results arrived
+                placeItemsList.clear()
+                if (::mapLibreMap.isInitialized) {
+                    mapLibreMap.clear()
+                }
+                markerMap.clear()
 
                 val defaultIcon = IconFactory.getInstance(this@PharmacyActivity).defaultMarker()
 
                 for (feature in features) {
                     val props = feature.properties
                     val geom = feature.geometry
-                    val placeId = props.placeId
-                    val name = props.name ?: when (selectedCategoryName) {
-                        "Pharmacies" -> "Local Pharmacy"
-                        "Hospitals" -> "Hospital / Medical Center"
-                        "Clinics" -> "Medical Clinic"
-                        "Emergencies" -> "Emergency Care"
-                        "Laboratories" -> "Medical Laboratory"
-                        "Dentists" -> "Dental Clinic"
-                        else -> "Healthcare Center"
+                    val placeId = props.placeId ?: UUID.randomUUID().toString()
+                    val fallbackLocality = props.street ?: props.suburb ?: props.city
+                    val name = props.name ?: if (!fallbackLocality.isNullOrEmpty()) {
+                        when (selectedCategoryName) {
+                            "Pharmacies" -> "Pharmacy - $fallbackLocality"
+                            "Hospitals" -> "Hospital - $fallbackLocality"
+                            "Doctors & Clinics" -> "Clinic - $fallbackLocality"
+                            "Emergencies" -> "Emergency Care - $fallbackLocality"
+                            "Laboratories" -> "Laboratory - $fallbackLocality"
+                            "Dentists" -> "Dental Clinic - $fallbackLocality"
+                            else -> "Healthcare - $fallbackLocality"
+                        }
+                    } else {
+                        when (selectedCategoryName) {
+                            "Pharmacies" -> "Local Pharmacy"
+                            "Hospitals" -> "Hospital / Medical Center"
+                            "Doctors & Clinics" -> "Medical Clinic"
+                            "Emergencies" -> "Emergency Care"
+                            "Laboratories" -> "Medical Laboratory"
+                            "Dentists" -> "Dental Clinic"
+                            else -> "Healthcare Facility"
+                        }
                     }
                     val lon = geom.coordinates[0]
                     val lat = geom.coordinates[1]
-                    val address = props.formatted ?: "No address available"
+                    val address = props.formatted ?: "Address available on map"
                     val phone = props.contact?.phone
                     val website = props.website
 
@@ -327,16 +401,16 @@ class PharmacyActivity : BaseActivity() {
 
                     // Format distance user-friendly
                     val distStr = if (distanceMeters < 1000) {
-                        "${distanceMeters.toInt()} m away"
+                        "${distanceMeters.toInt()}m"
                     } else {
-                        String.format(Locale.getDefault(), "%.1f km away", distanceMeters / 1000.0)
+                        String.format(Locale.getDefault(), "%.1f km", distanceMeters / 1000.0)
                     }
 
                     val item = PharmacyItem(
                         placeId = placeId,
                         name = name,
-                        rating = "N/A", // Geoapify OSM does not natively return a 5-star rating scale
-                        details = distStr,
+                        rating = "N/A",
+                        details = "$distStr • $address",
                         latitude = lat,
                         longitude = lon,
                         address = address,
@@ -364,117 +438,37 @@ class PharmacyActivity : BaseActivity() {
 
                 // Update RecyclerView adapter
                 updateResultsAdapter()
+
+                // Adjust camera bounds to display nearest facilities
+                if (::mapLibreMap.isInitialized && placeItemsList.isNotEmpty()) {
+                    try {
+                        val boundsBuilder = com.mapbox.mapboxsdk.geometry.LatLngBounds.Builder()
+                        currentLatLng?.let { boundsBuilder.include(it) }
+                        for (item in placeItemsList.take(8)) {
+                            boundsBuilder.include(LatLng(item.latitude, item.longitude))
+                        }
+                        val bounds = boundsBuilder.build()
+                        mapLibreMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 120))
+                    } catch (e: Exception) {
+                        mapLibreMap.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(placeItemsList[0].latitude, placeItemsList[0].longitude), 14.0))
+                    }
+                }
             }
 
             override fun onFailure(call: Call<GeoapifyPlacesResponse>, t: Throwable) {
                 progressLoading.visibility = View.GONE
-                if (USE_FALLBACK_DATA) {
-                    loadFallbackData(searchCenter)
-                } else {
-                    Toast.makeText(this@PharmacyActivity, "Error querying nearby: ${t.message}", Toast.LENGTH_LONG).show()
-                    showErrorResults()
-                }
+                showErrorResults()
             }
         })
     }
 
-    private fun loadFallbackData(center: LatLng) {
+    private fun showPermissionDeniedMessage() {
         placeItemsList.clear()
         if (::mapLibreMap.isInitialized) {
             mapLibreMap.clear()
         }
         markerMap.clear()
 
-        val list = when (selectedCategoryName) {
-            "Pharmacies" -> listOf(
-                Triple("Medicare Care Pharmacy (Demo)", "123 Health Ave", "9876543210"),
-                Triple("Wellness Drugstore (Demo)", "456 Wellness Blvd", "9876543211"),
-                Triple("City Life Pharmacy (Demo)", "789 Metro St", "9876543212")
-            )
-            "Hospitals" -> listOf(
-                Triple("Metro General Hospital (Demo)", "100 Hospital Rd", "9876543213"),
-                Triple("St. Jude Medical Center (Demo)", "200 Care Ln", "9876543214")
-            )
-            "Clinics" -> listOf(
-                Triple("Apex Medical Clinic (Demo)", "50 Doctor Ave", "9876543215"),
-                Triple("CareFirst Clinic (Demo)", "60 Wellness St", "9876543216")
-            )
-            "Emergencies" -> listOf(
-                Triple("Rapid Response Emergency Ward (Demo)", "10 Trauma Rd", "9876543217"),
-                Triple("City Ambulance & Trauma Station (Demo)", "20 Emergency Blvd", "9876543218")
-            )
-            "Laboratories" -> listOf(
-                Triple("BioDiagnostics Lab (Demo)", "30 Science Rd", "9876543219"),
-                Triple("Precision Medical Lab (Demo)", "40 Test Ave", "9876543220")
-            )
-            "Dentists" -> listOf(
-                Triple("Bright Smile Dental Care (Demo)", "15 Smile Ln", "9876543221"),
-                Triple("Perfect Dental Clinic (Demo)", "25 Teeth St", "9876543222")
-            )
-            else -> listOf(
-                Triple("General Healthcare Center (Demo)", "1 Care St", "9876543223")
-            )
-        }
-
-        val defaultIcon = IconFactory.getInstance(this).defaultMarker()
-
-        val offsets = listOf(
-            Pair(0.003, -0.004),
-            Pair(-0.004, 0.005),
-            Pair(0.006, 0.003),
-            Pair(-0.002, -0.005)
-        )
-
-        for ((idx, p) in list.withIndex()) {
-            val offset = offsets[idx % offsets.size]
-            val lat = center.latitude + offset.first
-            val lon = center.longitude + offset.second
-            val placeId = "fallback_${selectedCategoryName.lowercase()}_$idx"
-
-            val results = FloatArray(1)
-            Location.distanceBetween(center.latitude, center.longitude, lat, lon, results)
-            val distanceMeters = results[0].toDouble()
-            val distStr = if (distanceMeters < 1000) {
-                "${distanceMeters.toInt()} m away (Demo)"
-            } else {
-                String.format(Locale.getDefault(), "%.1f km away (Demo)", distanceMeters / 1000.0)
-            }
-
-            val item = PharmacyItem(
-                placeId = placeId,
-                name = p.first,
-                rating = "4.5",
-                details = distStr,
-                latitude = lat,
-                longitude = lon,
-                address = p.second,
-                phoneNumber = p.third,
-                website = "https://example.com",
-                isOpen = true,
-                isMock = true
-            )
-            placeItemsList.add(item)
-
-            if (::mapLibreMap.isInitialized) {
-                val markerOptions = MarkerOptions()
-                    .position(LatLng(lat, lon))
-                    .title(p.first)
-                    .snippet(placeId)
-                    .icon(defaultIcon)
-
-                val marker = mapLibreMap.addMarker(markerOptions)
-                if (marker != null) {
-                    markerMap[placeId] = marker
-                }
-            }
-        }
-
-        updateResultsAdapter()
-        Toast.makeText(this, "No live locations found. Showing demo data.", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun showPermissionDeniedMessage() {
-        placeItemsList.clear()
         val item = PharmacyItem(
             placeId = "permission_denied",
             name = "Location Permission Denied",
@@ -490,6 +484,11 @@ class PharmacyActivity : BaseActivity() {
 
     private fun showLocationUnavailableMessage() {
         placeItemsList.clear()
+        if (::mapLibreMap.isInitialized) {
+            mapLibreMap.clear()
+        }
+        markerMap.clear()
+
         val item = PharmacyItem(
             placeId = "location_unavailable",
             name = "Location Unavailable",
@@ -519,53 +518,76 @@ class PharmacyActivity : BaseActivity() {
                     checkPermissionsAndFetchLocation(zoomToUser = true)
                 }
             },
-            onNavigateClick = {},
+            onNavigateClick = {
+                openGoogleMapsSearch("$selectedCategoryName near me")
+            },
             onCallClick = {}
         )
     }
 
     private fun showEmptyResults() {
         placeItemsList.clear()
+        if (::mapLibreMap.isInitialized) {
+            mapLibreMap.clear()
+        }
+        markerMap.clear()
+
         val item = PharmacyItem(
             placeId = "empty",
-            name = "No Locations Found",
-            rating = "0.0",
-            details = "Expand search radius to search wider area.",
+            name = "No $selectedCategoryName Found Nearby",
+            rating = "N/A",
+            details = "Tap to search directly on Google Maps.",
             latitude = 0.0,
             longitude = 0.0,
-            address = "No healthcare facilities found within search circle."
+            address = "No facilities were found in this area. Tap Navigate to view live listings on Google Maps."
         )
         placeItemsList.add(item)
-        
+
         recyclerPharmacies.adapter = PharmacyAdapter(placeItemsList,
             onItemClick = {
-                // Try expanding search radius on tap
-                searchRadius *= 2
-                performNearbySearch()
+                openGoogleMapsSearch("$selectedCategoryName near me")
             },
-            onNavigateClick = {},
+            onNavigateClick = {
+                openGoogleMapsSearch("$selectedCategoryName near me")
+            },
             onCallClick = {}
         )
     }
 
     private fun showErrorResults() {
         placeItemsList.clear()
+        if (::mapLibreMap.isInitialized) {
+            mapLibreMap.clear()
+        }
+        markerMap.clear()
+
         val item = PharmacyItem(
             placeId = "error",
-            name = "Connection/API Error",
-            rating = "0.0",
-            details = "Verify your internet and API configuration.",
+            name = "Unable to Query $selectedCategoryName",
+            rating = "N/A",
+            details = "Tap to search directly on Google Maps.",
             latitude = 0.0,
             longitude = 0.0,
-            address = "Could not fetch nearby location markers. Click VIEW MAP/REFRESH to retry."
+            address = "Could not fetch nearby location markers. Tap to retry or tap Navigate to open Google Maps."
         )
         placeItemsList.add(item)
 
         recyclerPharmacies.adapter = PharmacyAdapter(placeItemsList,
             onItemClick = { performNearbySearch() },
-            onNavigateClick = {},
+            onNavigateClick = {
+                openGoogleMapsSearch("$selectedCategoryName near me")
+            },
             onCallClick = {}
         )
+    }
+
+    private fun openGoogleMapsSearch(query: String) {
+        val searchUri = Uri.parse("https://www.google.com/maps/search/?api=1&query=${Uri.encode(query)}")
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, searchUri))
+        } catch (e: Exception) {
+            Toast.makeText(this, "No browser or maps application available", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun updateResultsAdapter() {
@@ -595,7 +617,7 @@ class PharmacyActivity : BaseActivity() {
         details.append("Address: ${item.address}\n\n")
         if (!item.phoneNumber.isNullOrEmpty()) details.append("Phone: ${item.phoneNumber}\n\n")
         if (!item.website.isNullOrEmpty()) details.append("Website: ${item.website}\n\n")
-        
+
         AlertDialog.Builder(this)
             .setTitle(item.name)
             .setMessage(details.toString())
@@ -606,26 +628,38 @@ class PharmacyActivity : BaseActivity() {
                         launchCallIntent(item)
                     }
                 }
-                if (item.latitude != 0.0) {
-                    setNegativeButton("Directions") { _, _ ->
-                        launchNavigationIntent(item)
-                    }
+                setNegativeButton("Directions") { _, _ ->
+                    launchNavigationIntent(item)
                 }
             }
             .show()
     }
 
     private fun launchNavigationIntent(item: PharmacyItem) {
-        if (item.latitude == 0.0) return
-        val uri = Uri.parse("google.navigation:q=${item.latitude},${item.longitude}&mode=d")
-        val mapIntent = Intent(Intent.ACTION_VIEW, uri).apply {
+        if (item.placeId == "empty" || item.placeId == "error" || item.placeId == "permission_denied" || item.placeId == "location_unavailable") {
+            openGoogleMapsSearch("$selectedCategoryName near me")
+            return
+        }
+
+        if (item.latitude == 0.0 && item.longitude == 0.0) {
+            openGoogleMapsSearch(item.name + " " + item.address)
+            return
+        }
+
+        // Direct navigation with destination coordinates and facility name
+        val gmmIntentUri = Uri.parse("geo:0,0?q=${item.latitude},${item.longitude}(${Uri.encode(item.name)})")
+        val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri).apply {
             setPackage("com.google.android.apps.maps")
         }
         if (mapIntent.resolveActivity(packageManager) != null) {
             startActivity(mapIntent)
         } else {
-            val fallbackUri = Uri.parse("https://www.google.com/maps/dir/?api=1&destination=${item.latitude},${item.longitude}")
-            startActivity(Intent(Intent.ACTION_VIEW, fallbackUri))
+            val fallbackUri = Uri.parse("https://www.google.com/maps/dir/?api=1&destination=${item.latitude},${item.longitude}&query=${Uri.encode(item.name)}")
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, fallbackUri))
+            } catch (e: Exception) {
+                openGoogleMapsSearch(item.name)
+            }
         }
     }
 

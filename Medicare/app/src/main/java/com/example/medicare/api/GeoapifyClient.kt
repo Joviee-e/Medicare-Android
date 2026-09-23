@@ -12,10 +12,10 @@ interface GeoapifyService {
     @GET("v2/places")
     fun getNearbyPlaces(
         @Query("categories") categories: String,
-        @Query("filter") filter: String,
+        @Query("filter") filter: String? = null,
         @Query("bias") bias: String,
-        @Query("limit") limit: Int,
-        @Query("name") name: String?,
+        @Query("limit") limit: Int = 50,
+        @Query("name") name: String? = null,
         @Query("apiKey") apiKey: String
     ): Call<GeoapifyPlacesResponse>
 }

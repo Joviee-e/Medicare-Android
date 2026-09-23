@@ -80,6 +80,11 @@ class ProfileActivity : BaseActivity() {
         // Fetch profile from backend
         loadProfileData()
 
+        // Notification Bell trigger
+        findViewById<ImageView>(R.id.btn_notification)?.setOnClickListener {
+            NotificationHelper.show(this)
+        }
+
         // Edit Profile Trigger -> shows Edit Profile Dialog
         findViewById<ImageView>(R.id.btn_edit_profile)?.setOnClickListener {
             showEditProfileDialog()
@@ -117,8 +122,17 @@ class ProfileActivity : BaseActivity() {
         switchSounds?.setOnCheckedChangeListener { _, isChecked ->
             sessionManager.setReminderSoundsEnabled(isChecked)
         }
+        findViewById<View>(R.id.row_contrast)?.setOnClickListener {
+            switchContrast.toggle()
+        }
+        findViewById<View>(R.id.row_voice)?.setOnClickListener {
+            switchVoice.toggle()
+        }
         findViewById<View>(R.id.row_reminder_sounds)?.setOnClickListener {
             switchSounds?.toggle()
+        }
+        findViewById<View>(R.id.row_haptic)?.setOnClickListener {
+            switchHaptic.toggle()
         }
 
         // Sign Out trigger
@@ -235,11 +249,14 @@ class ProfileActivity : BaseActivity() {
 
         btnEditPhoneCountry.text = getCountryLabel(selectedUserCountry)
         btnEditEmergPhoneCountry.text = getCountryLabel(selectedEmergCountry)
+        PhoneNumberHelper.applyCountryInputFilter(editPhone, selectedUserCountry)
+        PhoneNumberHelper.applyCountryInputFilter(editEmergPhone, selectedEmergCountry)
 
         btnEditPhoneCountry.setOnClickListener {
             PhoneNumberHelper.showCountryPickerDialog(this) { country ->
                 selectedUserCountry = country
                 btnEditPhoneCountry.text = getCountryLabel(country)
+                PhoneNumberHelper.applyCountryInputFilter(editPhone, country)
                 val phone = editPhone.text.toString().trim()
                 if (phone.isNotEmpty() && PhoneNumberHelper.isValidNumber(phone, selectedUserCountry.code)) {
                     editPhone.setText(PhoneNumberHelper.formatNationalNumber(phone, selectedUserCountry.code))
@@ -252,6 +269,7 @@ class ProfileActivity : BaseActivity() {
             PhoneNumberHelper.showCountryPickerDialog(this) { country ->
                 selectedEmergCountry = country
                 btnEditEmergPhoneCountry.text = getCountryLabel(country)
+                PhoneNumberHelper.applyCountryInputFilter(editEmergPhone, country)
                 val phone = editEmergPhone.text.toString().trim()
                 if (phone.isNotEmpty() && PhoneNumberHelper.isValidNumber(phone, selectedEmergCountry.code)) {
                     editEmergPhone.setText(PhoneNumberHelper.formatNationalNumber(phone, selectedEmergCountry.code))
@@ -264,11 +282,12 @@ class ProfileActivity : BaseActivity() {
             if (!hasFocus) {
                 val phone = editPhone.text.toString().trim()
                 if (phone.isNotEmpty()) {
-                    if (PhoneNumberHelper.isValidNumber(phone, selectedUserCountry.code)) {
+                    val cleanDigits = phone.filter { it.isDigit() }
+                    if (cleanDigits.length != selectedUserCountry.nationalDigits || !PhoneNumberHelper.isValidNumber(phone, selectedUserCountry.code)) {
+                        editPhone.error = "Enter a valid ${selectedUserCountry.nationalDigits}-digit phone number for ${selectedUserCountry.name}"
+                    } else {
                         editPhone.setText(PhoneNumberHelper.formatNationalNumber(phone, selectedUserCountry.code))
                         editPhone.error = null
-                    } else {
-                        editPhone.error = "Enter a valid phone number for selected country"
                     }
                 }
             }
@@ -278,11 +297,12 @@ class ProfileActivity : BaseActivity() {
             if (!hasFocus) {
                 val phone = editEmergPhone.text.toString().trim()
                 if (phone.isNotEmpty()) {
-                    if (PhoneNumberHelper.isValidNumber(phone, selectedEmergCountry.code)) {
+                    val cleanDigits = phone.filter { it.isDigit() }
+                    if (cleanDigits.length != selectedEmergCountry.nationalDigits || !PhoneNumberHelper.isValidNumber(phone, selectedEmergCountry.code)) {
+                        editEmergPhone.error = "Enter a valid ${selectedEmergCountry.nationalDigits}-digit phone number for ${selectedEmergCountry.name}"
+                    } else {
                         editEmergPhone.setText(PhoneNumberHelper.formatNationalNumber(phone, selectedEmergCountry.code))
                         editEmergPhone.error = null
-                    } else {
-                        editEmergPhone.error = "Enter a valid phone number for selected country"
                     }
                 }
             }
@@ -305,11 +325,13 @@ class ProfileActivity : BaseActivity() {
             profile.phoneCountryCode?.let { code ->
                 selectedUserCountry = PhoneNumberHelper.getCountryByCode(code)
                 btnEditPhoneCountry.text = getCountryLabel(selectedUserCountry)
+                PhoneNumberHelper.applyCountryInputFilter(editPhone, selectedUserCountry)
             } ?: run {
                 profile.phone?.let { full ->
                     PhoneNumberHelper.parseInternationalNumber(full)?.let { pair ->
                         selectedUserCountry = pair.first
                         btnEditPhoneCountry.text = getCountryLabel(selectedUserCountry)
+                        PhoneNumberHelper.applyCountryInputFilter(editPhone, selectedUserCountry)
                         editPhone.setText(pair.second)
                     }
                 }
@@ -328,10 +350,12 @@ class ProfileActivity : BaseActivity() {
             if (emergCountryVal.isNotEmpty()) {
                 selectedEmergCountry = PhoneNumberHelper.getCountryByCode(emergCountryVal)
                 btnEditEmergPhoneCountry.text = getCountryLabel(selectedEmergCountry)
+                PhoneNumberHelper.applyCountryInputFilter(editEmergPhone, selectedEmergCountry)
             } else if (emergPhoneVal.isNotEmpty()) {
                 PhoneNumberHelper.parseInternationalNumber(emergPhoneVal)?.let { pair ->
                     selectedEmergCountry = pair.first
                     btnEditEmergPhoneCountry.text = getCountryLabel(selectedEmergCountry)
+                    PhoneNumberHelper.applyCountryInputFilter(editEmergPhone, selectedEmergCountry)
                     editEmergPhone.setText(pair.second)
                 }
             }
@@ -381,15 +405,21 @@ class ProfileActivity : BaseActivity() {
             }
 
             // User phone validation
-            if (newPhone.isNotEmpty() && !PhoneNumberHelper.isValidNumber(newPhone, selectedUserCountry.code)) {
-                editPhone.error = "Enter a valid phone number for selected country"
-                return@setOnClickListener
+            if (newPhone.isNotEmpty()) {
+                val cleanDigits = newPhone.filter { it.isDigit() }
+                if (cleanDigits.length != selectedUserCountry.nationalDigits || !PhoneNumberHelper.isValidNumber(newPhone, selectedUserCountry.code)) {
+                    editPhone.error = "Enter a valid ${selectedUserCountry.nationalDigits}-digit phone number for ${selectedUserCountry.name}"
+                    return@setOnClickListener
+                }
             }
 
             // Emergency contact validation
-            if (newEmergPhone.isNotEmpty() && !PhoneNumberHelper.isValidNumber(newEmergPhone, selectedEmergCountry.code)) {
-                editEmergPhone.error = "Enter a valid phone number for selected country"
-                return@setOnClickListener
+            if (newEmergPhone.isNotEmpty()) {
+                val cleanDigits = newEmergPhone.filter { it.isDigit() }
+                if (cleanDigits.length != selectedEmergCountry.nationalDigits || !PhoneNumberHelper.isValidNumber(newEmergPhone, selectedEmergCountry.code)) {
+                    editEmergPhone.error = "Enter a valid ${selectedEmergCountry.nationalDigits}-digit phone number for ${selectedEmergCountry.name}"
+                    return@setOnClickListener
+                }
             }
 
             val settings = AccessibilitySettings(
@@ -462,7 +492,10 @@ class ProfileActivity : BaseActivity() {
             if (isChecked != sessionManager.isContrastMode()) {
                 sessionManager.setContrastMode(isChecked)
                 syncAccessibilitySettingsToBackend()
-                recreate()
+                // Allow the toggle button slide animation to complete smoothly before recreating
+                switchContrast.postDelayed({
+                    recreate()
+                }, 280)
             }
         }
         

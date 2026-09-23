@@ -89,10 +89,12 @@ class OnboardingActivity : BaseActivity() {
         inputPhone = findViewById(R.id.input_ob_phone)
         btnObPhoneCountry = findViewById(R.id.btn_ob_phone_country)
         btnObPhoneCountry.text = getCountryLabel(selectedUserCountry)
+        PhoneNumberHelper.applyCountryInputFilter(inputPhone, selectedUserCountry)
         btnObPhoneCountry.setOnClickListener {
             PhoneNumberHelper.showCountryPickerDialog(this) { country ->
                 selectedUserCountry = country
                 btnObPhoneCountry.text = getCountryLabel(country)
+                PhoneNumberHelper.applyCountryInputFilter(inputPhone, country)
                 validateUserPhone(showError = false)
             }
         }
@@ -113,10 +115,12 @@ class OnboardingActivity : BaseActivity() {
         inputEmergPhone = findViewById(R.id.input_ob_emerg_phone)
         btnObEmergPhoneCountry = findViewById(R.id.btn_ob_emerg_phone_country)
         btnObEmergPhoneCountry.text = getCountryLabel(selectedEmergCountry)
+        PhoneNumberHelper.applyCountryInputFilter(inputEmergPhone, selectedEmergCountry)
         btnObEmergPhoneCountry.setOnClickListener {
             PhoneNumberHelper.showCountryPickerDialog(this) { country ->
                 selectedEmergCountry = country
                 btnObEmergPhoneCountry.text = getCountryLabel(country)
+                PhoneNumberHelper.applyCountryInputFilter(inputEmergPhone, country)
                 validateEmergPhone(showError = false)
             }
         }
@@ -544,6 +548,11 @@ class OnboardingActivity : BaseActivity() {
             if (showError) inputPhone.error = "Phone number is required"
             return false
         }
+        val cleanDigits = phone.filter { it.isDigit() }
+        if (cleanDigits.length != selectedUserCountry.nationalDigits) {
+            if (showError) inputPhone.error = "Enter a valid ${selectedUserCountry.nationalDigits}-digit phone number for ${selectedUserCountry.name}"
+            return false
+        }
         val isValid = PhoneNumberHelper.isValidNumber(phone, selectedUserCountry.code)
         if (!isValid) {
             if (showError) inputPhone.error = "Enter a valid phone number for selected country"
@@ -562,6 +571,11 @@ class OnboardingActivity : BaseActivity() {
         val phone = inputEmergPhone.text.toString().trim()
         if (phone.isEmpty()) {
             if (showError) inputEmergPhone.error = "Emergency phone is required"
+            return false
+        }
+        val cleanDigits = phone.filter { it.isDigit() }
+        if (cleanDigits.length != selectedEmergCountry.nationalDigits) {
+            if (showError) inputEmergPhone.error = "Enter a valid ${selectedEmergCountry.nationalDigits}-digit phone number for ${selectedEmergCountry.name}"
             return false
         }
         val isValid = PhoneNumberHelper.isValidNumber(phone, selectedEmergCountry.code)
