@@ -117,7 +117,81 @@
    - [x] Open Pharmacy tab.
    - [x] Header subtitle displays "Found X verified facilities near you" instead of "within 5 km".
    - [x] Results list returns all genuine facilities ordered by proximity from closest to furthest.
+### Issue 9: Map Marker Info Window Clutter & Random Hash Snippets
+* **Symptom:** Tapping a facility pin on the map caused multiple oversized speech-bubble info windows to pop up and remain crowded over the map view, displaying long random code-like strings (e.g. `51f4bf5c8b16825ec059abf12d07d5af4240f0...`).
+* **Root Cause:** In `PharmacyActivity.kt`, markers were constructed with `snippet = placeId` (the 64-character Geoapify hex hash), and `marker.showInfoWindow()` was invoked on tap, which triggered MapLibre's default speech bubble overlay with the hash string.
+* **Fix:** Removed `.snippet(placeId)` from marker creation. Updated `map.setOnMarkerClickListener` to call `marker.hideInfoWindow()` immediately, animate the map camera to center on the pin, smoothly scroll the RecyclerView to that item, and present the clean facility action dialog directly without obscuring the map.
+
+### Issue 10: Pharmacy Star Rating UI Removal
+* **Symptom:** Pharmacy cards displayed a static "★★★★★ N/A" row that cluttered the card.
+* **Root Cause:** `item_pharmacy.xml` and `PharmacyAdapter.kt` contained a 5-star rating layout and TextView.
+* **Fix:** Removed the rating row completely from `item_pharmacy.xml` and cleaned up `PharmacyAdapter.kt`, placing distance and clean street address directly below the facility title.
+
+---
+
+## 2. Files Modified & Created
+
+### New Files Created
+1. **`Medicare/app/src/main/res/layout/dialog_notifications.xml`**: Bottom sheet layout with category filter chips, notifications list, and empty state.
+2. **`Medicare/app/src/main/res/layout/item_notification.xml`**: Notification card with type icons, timestamp, action button, and dismiss trigger.
+3. **`Medicare/app/src/main/java/com/example/medicare/NotificationHelper.kt`**: Manages active notifications, bottom sheet dialog, filtering, and navigation.
+
+### Modified Files
+1. **`Medicare-Backend/app.py`**: Added root `/`, `/api`, `/api/` 200 OK routes and flexible slash handling.
+2. **`Medicare-Backend/test_backend.py`**: Added unit tests for root and API health routes.
+3. **`Medicare/app/src/main/java/com/example/medicare/api/RetrofitClient.kt`**: Set production Render URL as central base URL.
+4. **`Medicare/app/src/main/java/com/example/medicare/BaseActivity.kt`**: Font scaling and contrast change detection in `onResume()`.
+5. **`Medicare/app/src/main/java/com/example/medicare/PhoneNumberHelper.kt`**: Added `nationalDigits` to `Country`, `applyCountryInputFilter()`, and `hasExactNationalDigits()`.
+6. **`Medicare/app/src/main/java/com/example/medicare/OnboardingActivity.kt`**: Applied country-based digit limiters and strict validation to phone and emergency phone inputs.
+7. **`Medicare/app/src/main/java/com/example/medicare/ProfileActivity.kt`**: Applied country-based digit limiters to edit profile dialog; removed 280ms toggle delay smoothly; wired notification bell.
+8. **`Medicare/app/src/main/java/com/example/medicare/PharmacyActivity.kt`**: Removed artificial circle radius; eliminated speech bubble info window clutter and placeId hash snippets; dynamic camera bounds; wired notification bell.
+9. **`Medicare/app/src/main/java/com/example/medicare/PharmacyAdapter.kt`**: Removed rating view binding.
+10. **`Medicare/app/src/main/res/layout/item_pharmacy.xml`**: Removed star rating row; cleaner details layout.
+11. **`Medicare/app/src/main/java/com/example/medicare/HomeActivity.kt`**: Wired notification bell to `NotificationHelper.show(this)`.
+12. **`Medicare/app/src/main/java/com/example/medicare/MedicinesActivity.kt`**: Wired notification bell to `NotificationHelper.show(this)`.
+13. **`Medicare/app/src/main/java/com/example/medicare/api/GeoapifyClient.kt`**: Made `filter` optional (`null`) for radius-free queries.
+14. **`Medicare/app/src/main/java/com/example/medicare/api/Models.kt`**: Added address fields (`street`, `suburb`, `city`, `addressLine1`) to `GeoapifyProperties`.
+15. **`Medicare/app/src/main/res/layout/activity_medicines.xml`**: Removed 3-slash menu icon; anchored logo and notification icon.
+16. **`Medicare/app/src/main/res/layout/activity_profile.xml`**: Removed 3-slash menu icon; updated track tint; added clickable row containers.
+
+---
+
+## 3. Verification & Testing Results
+
+### Backend Automated Tests
+* **Command:** `.\Medicare-Backend\venv\Scripts\python -m pytest`
+* **Result:** **20 passed** (100% test pass rate across unit and live integration suites).
+* **Endpoints verified:**
+  * `GET /` -> 200 OK (`{"success": true, "message": "MediCare+ Backend API is running"}`)
+  * `GET /api` -> 200 OK (`{"success": true, "message": "MediCare+ Backend API is running"}`)
+  * `GET /health` -> 200 OK (`{"database_connected": true, "status": "healthy"}`)
+  * `POST /api/auth/register` -> 201 Created on registration / 400 Bad Request on invalid payloads.
+
+### Android Compilation & Build
+* **Command:** `cd Medicare; .\gradlew.bat compileDebugSources`
+* **Result:** **BUILD SUCCESSFUL** in 4s.
+* **Command:** `.\gradlew.bat assembleDebug`
+* **Result:** **BUILD SUCCESSFUL** in 4s. Debug APK generated cleanly.
+
+---
+
+## 4. Manual Verification Checklist
+
+1. **Phone Number Limitation (10 Digits for India):**
+   - [x] Open Onboarding Step 1 (or Profile -> Edit Profile).
+   - [x] Country defaults to India (`🇮🇳 +91`).
+   - [x] Type 10 digits: all 10 digits are accepted.
+   - [x] Attempt to type an 11th digit: keyboard input is physically blocked at 10 digits.
+   - [x] Switch country to Australia (`🇦🇺 +61`): limit adjusts to 9 digits and truncates excess digits.
+   - [x] Switch country to Germany (`🇩🇪 +49`): limit adjusts to 11 digits.
+
+2. **Map & Healthcare Facilities:**
+   - [x] Open Pharmacy tab.
+   - [x] Header subtitle displays "Found X verified facilities near you" instead of "within 5 km".
+   - [x] Results list returns all genuine facilities ordered by proximity from closest to furthest.
+   - [x] Tap any map pin: no speech bubble / hash code info window appears; camera smoothly centers on pin; list scrolls to item and opens clean facility actions dialog.
    - [x] Tap "Navigate" on any facility: Google Maps opens to the real facility name and exact coordinates.
+   - [x] Facility cards display clean addresses without duplicate names and without star rating rows.
 
 3. **Top Bar Clean-Up:**
    - [x] Inspect Medicines screen and Profile screen: 3-slash (hamburger) menu icon is removed.
@@ -129,3 +203,4 @@
    - [x] Medication reminders, refill warnings, and health tips are displayed.
    - [x] Tap "Log Dose" on a reminder: navigates directly to the Medicines schedule.
    - [x] Tap "Clear All": clears notifications and displays the "All Caught Up!" empty state.
+

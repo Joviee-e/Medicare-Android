@@ -123,13 +123,22 @@ class PharmacyActivity : BaseActivity() {
             map.uiSettings.isZoomGesturesEnabled = true
 
             map.setOnMarkerClickListener { marker ->
-                marker.showInfoWindow(mapLibreMap, mapView)
-                val placeId = marker.snippet
-                if (placeId != null) {
-                    val index = placeItemsList.indexOfFirst { it.placeId == placeId }
+                // Dismiss any default info windows to prevent map clutter
+                marker.hideInfoWindow()
+                val markerPos = marker.position
+                mapLibreMap.animateCamera(CameraUpdateFactory.newLatLngZoom(markerPos, 16.0))
+
+                val matchedItem = placeItemsList.firstOrNull {
+                    Math.abs(it.latitude - markerPos.latitude) < 0.0002 &&
+                    Math.abs(it.longitude - markerPos.longitude) < 0.0002
+                } ?: placeItemsList.firstOrNull { it.name == marker.title }
+
+                if (matchedItem != null) {
+                    val index = placeItemsList.indexOf(matchedItem)
                     if (index != -1) {
                         recyclerPharmacies.smoothScrollToPosition(index)
                     }
+                    showPlaceDetailsDialog(matchedItem)
                 }
                 true
             }
@@ -406,11 +415,17 @@ class PharmacyActivity : BaseActivity() {
                         String.format(Locale.getDefault(), "%.1f km", distanceMeters / 1000.0)
                     }
 
+                    val cleanAddress = if (address.startsWith(name, ignoreCase = true)) {
+                        address.removePrefix(name).trimStart(',', ' ')
+                    } else {
+                        address
+                    }
+
                     val item = PharmacyItem(
                         placeId = placeId,
                         name = name,
-                        rating = "N/A",
-                        details = "$distStr • $address",
+                        rating = "",
+                        details = "$distStr • $cleanAddress",
                         latitude = lat,
                         longitude = lon,
                         address = address,
@@ -421,12 +436,11 @@ class PharmacyActivity : BaseActivity() {
                     )
                     placeItemsList.add(item)
 
-                    // Add Map Marker
+                    // Add Map Marker without random hash code snippet
                     if (::mapLibreMap.isInitialized) {
                         val markerOptions = MarkerOptions()
                             .position(LatLng(lat, lon))
                             .title(name)
-                            .snippet(placeId)
                             .icon(defaultIcon)
 
                         val marker = mapLibreMap.addMarker(markerOptions)
@@ -597,7 +611,6 @@ class PharmacyActivity : BaseActivity() {
                 if (::mapLibreMap.isInitialized && item.latitude != 0.0) {
                     val latLng = LatLng(item.latitude, item.longitude)
                     mapLibreMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16.0))
-                    markerMap[item.placeId]?.showInfoWindow(mapLibreMap, mapView)
                 }
 
                 // Show Details Dialog

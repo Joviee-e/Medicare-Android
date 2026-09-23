@@ -15,7 +15,6 @@ class PharmacyAdapter(
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val txtName: TextView = view.findViewById(R.id.txt_pharmacy_name)
-        val txtRating: TextView = view.findViewById(R.id.txt_rating_value)
         val txtDetails: TextView = view.findViewById(R.id.txt_pharmacy_details)
         val btnNavigate: View = view.findViewById(R.id.btn_navigate)
         val btnCall: View = view.findViewById(R.id.btn_call)
@@ -30,7 +29,6 @@ class PharmacyAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
         holder.txtName.text = item.name
-        holder.txtRating.text = item.rating
         holder.txtDetails.text = item.details
 
         // Show/hide call button based on phone availability

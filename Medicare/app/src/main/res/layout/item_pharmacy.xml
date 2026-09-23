@@ -50,55 +50,7 @@
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="@id/store_icon_bg"/>
 
-        <!-- Rating Row -->
-        <LinearLayout
-            android:id="@+id/layout_rating"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginStart="14dp"
-            android:layout_marginTop="4dp"
-            app:layout_constraintLeft_toRightOf="@id/store_icon_bg"
-            app:layout_constraintTop_toBottomOf="@id/txt_pharmacy_name">
-
-            <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@drawable/ic_star"/>
-            <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@drawable/ic_star"
-                android:layout_marginStart="2dp"/>
-            <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@drawable/ic_star"
-                android:layout_marginStart="2dp"/>
-            <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@drawable/ic_star"
-                android:layout_marginStart="2dp"/>
-            <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@drawable/ic_star"
-                android:layout_marginStart="2dp"/>
-
-            <TextView
-                android:id="@+id/txt_rating_value"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="4.5"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary"
-                android:layout_marginStart="8dp"/>
-        </LinearLayout>
-
-        <!-- Distance and Hours details -->
+        <!-- Distance and Address details -->
         <LinearLayout
             android:id="@+id/layout_details_row"
             android:layout_width="0dp"
@@ -109,7 +61,7 @@
             android:layout_marginTop="6dp"
             app:layout_constraintLeft_toRightOf="@id/store_icon_bg"
             app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/layout_rating">
+            app:layout_constraintTop_toBottomOf="@id/txt_pharmacy_name">
 
             <ImageView
                 android:layout_width="16dp"
