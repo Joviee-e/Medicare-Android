@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 from database.mongo import get_users_collection
 from utils.password import hash_password
@@ -18,7 +18,7 @@ class UserModel:
             raise ValueError("Email already in use")
             
         hashed = hash_password(password)
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         user_doc = {
             "email": email,
@@ -43,7 +43,7 @@ class UserModel:
         users_col = get_users_collection()
         existing = users_col.find_one({"email": email})
         
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         if existing:
             # If user exists, ensure they are linked to this provider
             users_col.update_one(
@@ -88,8 +88,8 @@ class UserModel:
             updates["provider_id"] = None
             updated = True
         if "last_login" not in doc:
-            doc["last_login"] = doc.get("created_at", datetime.utcnow())
-            updates["last_login"] = doc.get("created_at", datetime.utcnow())
+            doc["last_login"] = doc.get("created_at", datetime.now(timezone.utc))
+            updates["last_login"] = doc.get("created_at", datetime.now(timezone.utc))
             updated = True
             
         if updated:
@@ -123,7 +123,7 @@ class UserModel:
         try:
             users_col.update_one(
                 {"_id": ObjectId(user_id)},
-                {"$set": {"last_login": datetime.utcnow()}}
+                {"$set": {"last_login": datetime.now(timezone.utc)}}
             )
         except Exception:
             pass
@@ -171,6 +171,6 @@ class UserModel:
             {"email": email},
             {"$set": {
                 "password_hash": hashed_password,
-                "updated_at": datetime.utcnow()
+                "updated_at": datetime.now(timezone.utc)
             }}
         )

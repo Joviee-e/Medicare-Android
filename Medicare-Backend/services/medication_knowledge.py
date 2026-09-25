@@ -5,7 +5,7 @@ Caches all successful lookups in MongoDB to ensure high availability and rate-li
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 import requests
 from config import Config
 from database.mongo import get_medication_cache_collection
@@ -207,7 +207,7 @@ def get_medication_info(medicine_name: str) -> dict:
             "rxnorm": rx_norm.get("status") in ("verified", "approximate"),
             "openfda": fda_data.get("found", False)
         },
-        "cached_at": datetime.utcnow().isoformat()
+        "cached_at": datetime.now(timezone.utc).isoformat()
     }
 
     # 4. Save into MongoDB Cache

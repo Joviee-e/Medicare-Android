@@ -72,6 +72,13 @@ KNOWN_INTERACTIONS = [
         "description": "Combining an NSAID/antiplatelet with an anticoagulant significantly elevates the risk of gastrointestinal and systemic bleeding."
     },
     {
+        "pair": ({"aspirin", "bayer", "ecotrin", "acetylsalicylic acid"},
+                 {"ibuprofen", "advil", "motrin", "naproxen", "aleve", "diclofenac", "ketorolac", "meloxicam", "indomethacin"}),
+        "title": "Diminished Cardioprotection / Increased GI Bleed Risk",
+        "severity": "medium",
+        "description": "NSAIDs can competitively inhibit the cardioprotective antiplatelet effect of low-dose aspirin and elevate gastrointestinal ulcer and bleeding risk."
+    },
+    {
         "pair": ({"lisinopril", "enalapril", "ramipril", "losartan", "valsartan", "candesartan"},
                  {"spironolactone", "potassium", "eplerenone", "triamterene"}),
         "title": "Risk of Hyperkalemia",
@@ -200,8 +207,9 @@ def check_drug_interactions(new_med_info: dict, existing_medicines: list) -> Lis
             continue
         ex_name_lower = ex_name.lower()
 
-        # 1. Check duplicate therapy (same medication already scheduled)
-        if ex_name_lower in new_terms or any(t in ex_name_lower for t in new_terms if len(t) > 3):
+        # 1. Check duplicate therapy (same medication or same therapeutic class already scheduled)
+        is_exact_dup = ex_name_lower in new_terms or any(t in ex_name_lower for t in new_terms if len(t) > 3)
+        if is_exact_dup:
             alerts.append({
                 "type": "duplicate_therapy",
                 "priority": "medium",
@@ -216,6 +224,7 @@ def check_drug_interactions(new_med_info: dict, existing_medicines: list) -> Lis
             continue
 
         # 2. Check clinically documented interaction pairs
+        interaction_found = False
         for rule in KNOWN_INTERACTIONS:
             group_a, group_b = rule["pair"]
             new_in_a = any(any(m in t for m in group_a) for t in new_terms)
@@ -232,7 +241,37 @@ def check_drug_interactions(new_med_info: dict, existing_medicines: list) -> Lis
                     "other_medication": ex_name,
                     "source": "safety_engine"
                 })
+                interaction_found = True
                 break
+
+        if interaction_found:
+            continue
+
+        # 3. Check duplicate therapeutic class (e.g., two different NSAIDs, two ACE inhibitors, two statins)
+        shared_class = None
+        for class_name, members in ALLERGY_CLASS_MAP.items():
+            if class_name in ("paracetamol", "aspirin"): # Skip single substance alias keys
+                continue
+            new_in_class = any(any(m in t for m in members) or class_name in t for t in new_terms)
+            ex_in_class = any(m in ex_name_lower for m in members) or class_name in ex_name_lower
+            if new_in_class and ex_in_class:
+                shared_class = class_name
+                break
+
+        if shared_class:
+            alerts.append({
+                "type": "duplicate_therapy",
+                "priority": "medium",
+                "title": f"Duplicate Therapeutic Class: {shared_class.upper()} Detected",
+                "message": (
+                    f"Both {new_name_display} and your active medication '{ex_name}' belong to the {shared_class.upper()} class. "
+                    f"Concurrent use of multiple medications in the same class may increase adverse side effects. "
+                    f"Please confirm with your doctor or pharmacist."
+                ),
+                "other_medication": ex_name,
+                "source": "safety_engine"
+            })
+            continue
 
         # 3. Check openFDA drug label interactions text
         interactions_text = " ".join(new_med_info.get("label_information", {}).get("interactions", [])).lower()

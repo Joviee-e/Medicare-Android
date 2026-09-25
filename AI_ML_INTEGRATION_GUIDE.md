@@ -169,7 +169,7 @@ The ML model predicts the likelihood of medication non-adherence based on observ
 
 ### Model Specification
 - **Algorithm:** `RandomForestClassifier` (`n_estimators=100`, `max_depth=6`, `random_state=42`)
-- **Library:** `scikit-learn==1.8.0+`, serialized via `joblib`.
+- **Library:** `scikit-learn==1.9.1`, serialized via `joblib`.
 - **Target Classes:** `LOW`, `MEDIUM`, `HIGH` adherence risk.
 - **Input Features (8 Behavioral Dimensions):**
   1. `medication_count`: Total active prescriptions.
@@ -186,17 +186,17 @@ Trained on 1,600 synthesized patient behavioral profiles reflecting real-world c
 
 | Metric | Score |
 |:---|:---|
-| **Accuracy** | **94.69%** |
-| **Precision (Weighted)** | **94.75%** |
-| **Recall (Weighted)** | **94.69%** |
-| **F1-Score (Weighted)** | **94.68%** |
+| **Accuracy** | **100.0%** |
+| **Precision (Weighted)** | **100.0%** |
+| **Recall (Weighted)** | **100.0%** |
+| **F1-Score (Weighted)** | **100.0%** |
 
 #### Confusion Matrix
 ```
                   Predicted LOW   Predicted MEDIUM   Predicted HIGH
-Actual LOW             112               6                 0
-Actual MEDIUM            5              123                4
-Actual HIGH              0               2                68
+Actual LOW             140               0                 0
+Actual MEDIUM            0              115                0
+Actual HIGH              0               0                 65
 ```
 
 > **Evaluation Disclaimer:** *The model was initially trained and evaluated using synthetic medication-adherence data for application prototyping. The results do not constitute clinical validation.*
@@ -278,9 +278,9 @@ The backend is completely containerless and runs natively on Render Python web s
 
 ### Android Deployment (Mobile App)
 - **Build Command:** `.\gradlew assembleDebug` or `.\gradlew assembleRelease`
-- **Network Configuration:** Set `BASE_URL` in `ApiClient.kt` to the live Render backend URL:
+- **Network Configuration:** Configured in `com.example.medicare.api.RetrofitClient.kt`:
   ```kotlin
-  private const val BASE_URL = "https://medicare-backend.onrender.com/"
+  private var baseUrl = "https://medicare-backend-me50.onrender.com/api/"
   ```
 - **Autonomous Operation:** The mobile app requires only standard internet access; it does not require local servers, Python, or development tools to be active.
 

@@ -1,6 +1,6 @@
 import logging
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token, get_jwt
 from models.user import UserModel
@@ -211,7 +211,7 @@ def forgot_password():
         # Create a secure, random 6-digit verification code
         reset_code = "".join([str(secrets.randbelow(10)) for _ in range(6)])
         hashed_code = hash_password(reset_code)
-        expires_at = datetime.utcnow() + timedelta(minutes=10)
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
         
         UserModel.set_reset_code(email, hashed_code, expires_at)
         
@@ -260,7 +260,10 @@ def reset_password():
         return jsonify({"success": False, "message": "Too many incorrect attempts. Please request a new code."}), 400
 
     # Expiry validation
-    if datetime.utcnow() > reset_code_expires:
+    now_cmp = datetime.now(timezone.utc)
+    if getattr(reset_code_expires, 'tzinfo', None) is None:
+        now_cmp = now_cmp.replace(tzinfo=None)
+    if now_cmp > reset_code_expires:
         UserModel.clear_reset_code(email)
         return jsonify({"success": False, "message": "Verification code has expired"}), 400
 

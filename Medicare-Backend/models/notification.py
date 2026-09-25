@@ -4,7 +4,7 @@ Manages patient medication alerts, safety warnings, and adherence recommendation
 Provides structured storage, priority sorting (HIGH > MEDIUM > LOW), and retrieval.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 from database.mongo import get_notifications_collection
 
@@ -17,7 +17,7 @@ class NotificationModel:
                             medicine_name: str = "", context_for_ai: str = "") -> str:
         """Create and store a prioritized notification record."""
         col = get_notifications_collection()
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         clean_priority = priority.lower() if priority.lower() in ("high", "medium", "low") else "low"
 

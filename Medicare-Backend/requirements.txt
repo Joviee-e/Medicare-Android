@@ -86,7 +86,7 @@ jedi==0.19.2
 Jinja2==3.1.6
 jiter==0.13.0
 jmespath==1.0.1
-joblib==1.5.3
+joblib>=1.5.3
 jsonschema==4.26.0
 jsonschema-specifications==2025.9.1
 jupyter_client==8.6.3
@@ -154,7 +154,7 @@ rich==14.2.0
 rpds-py==0.30.0
 rsa==4.9.1
 s3transfer==0.16.0
-scikit-learn==1.8.0
+scikit-learn==1.9.1
 scipy==1.17.1
 simple-websocket==1.1.0
 six==1.17.0

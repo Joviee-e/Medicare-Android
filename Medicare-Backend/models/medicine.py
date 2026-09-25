@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 from database.mongo import get_medicines_collection
 
@@ -8,7 +8,7 @@ class MedicineModel:
                         frequency: str, start_date: str, end_date: str, reminder_times: list) -> str:
         """Create a new medication schedule."""
         medicines_col = get_medicines_collection()
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         medicine_doc = {
             "patient_id": ObjectId(patient_id),
@@ -59,7 +59,7 @@ class MedicineModel:
                         reminder_times: list) -> bool:
         """Update a medicine record. Ensures correct patient ownership."""
         medicines_col = get_medicines_collection()
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         try:
             result = medicines_col.update_one(
                 {"_id": ObjectId(medicine_id), "patient_id": ObjectId(patient_id)},
@@ -94,7 +94,7 @@ class MedicineModel:
     def add_log(medicine_id: str, patient_id: str, date: str, time: str, status: str) -> bool:
         """Add a dose compliance log. Ensures correct patient ownership."""
         medicines_col = get_medicines_collection()
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         log_entry = {
             "date": date,
             "time": time,

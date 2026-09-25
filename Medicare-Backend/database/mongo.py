@@ -43,6 +43,16 @@ def check_connection():
         pass
     return False
 
+def close_db():
+    global client, db
+    try:
+        if client:
+            client.close()
+    except Exception:
+        pass
+    client = None
+    db = None
+
 def create_indexes():
     """Ensure database collection indexes are created."""
     database = get_db()

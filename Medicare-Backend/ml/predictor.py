@@ -6,7 +6,7 @@ Provides personalized insight and prioritization recommendations without making 
 
 import os
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 import numpy as np
 import joblib
 
@@ -44,7 +44,7 @@ def extract_features_from_patient_data(medicines: list) -> dict:
     """
     Extracts quantifiable behavioral adherence features from active medicines and logs.
     """
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     seven_days_ago = (now - timedelta(days=7)).strftime("%Y-%m-%d")
     thirty_days_ago = (now - timedelta(days=30)).strftime("%Y-%m-%d")
 

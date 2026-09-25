@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 from database.mongo import get_appointments_collection, get_patients_collection, get_doctors_collection
 
@@ -7,7 +7,7 @@ class AppointmentModel:
     def create_appointment(patient_id: str, doctor_id: str, date_time_str: str, notes: str = None) -> str:
         """Create a new doctor appointment."""
         appointments_col = get_appointments_collection()
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         # Parse ISO date time
         try:
@@ -86,7 +86,7 @@ class AppointmentModel:
     def update_appointment(appointment_id: str, user_id: str, role: str, status: str, notes: str = None) -> bool:
         """Update an appointment status or notes. Ensures user is a party to the appointment."""
         appointments_col = get_appointments_collection()
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         query = {"_id": ObjectId(appointment_id)}
         if role == 'patient':

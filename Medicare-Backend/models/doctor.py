@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 from database.mongo import get_doctors_collection
 
@@ -8,7 +8,7 @@ class DoctorModel:
                        clinic_address: str = None, phone: str = None) -> bool:
         """Initialize doctor profile linked to users._id."""
         doctors_col = get_doctors_collection()
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         profile = {
             "_id": ObjectId(user_id),

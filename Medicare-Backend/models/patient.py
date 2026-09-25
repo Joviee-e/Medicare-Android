@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 from database.mongo import get_patients_collection
 
@@ -55,7 +55,7 @@ class PatientModel:
                        emergency_contact_name: str = None, emergency_contact_phone: str = None) -> bool:
         """Initialize patient profile linked to users._id."""
         patients_col = get_patients_collection()
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         # Populate initial emergency contact list element if fields are supplied
         contacts = []
@@ -183,7 +183,7 @@ class PatientModel:
                        phone_country_code: str = "", phone_national: str = "") -> bool:
         """Update patient details and accessibility parameters."""
         patients_col = get_patients_collection()
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         # Format/validate emergency contact parameters
         formatted_contacts = []

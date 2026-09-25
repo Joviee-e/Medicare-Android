@@ -118,7 +118,7 @@ def train_and_evaluate():
 
     clf = RandomForestClassifier(
         n_estimators=100,
-        max_depth=7,
+        max_depth=6,
         min_samples_split=4,
         min_samples_leaf=2,
         random_state=42
@@ -144,7 +144,7 @@ def train_and_evaluate():
     metrics = {
         "algorithm": "RandomForestClassifier",
         "n_estimators": 100,
-        "max_depth": 7,
+        "max_depth": 6,
         "n_train_samples": len(X_train),
         "n_test_samples": len(X_test),
         "features": FEATURE_NAMES,
