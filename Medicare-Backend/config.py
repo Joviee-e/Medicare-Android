@@ -31,6 +31,13 @@ class Config:
         # Google OAuth configuration
         cls.GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '')
 
+        # AI / Gemini configuration
+        cls.GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
+        cls.GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-flash-lite-latest')
+
+        # openFDA configuration
+        cls.OPENFDA_API_KEY = os.getenv('OPENFDA_API_KEY', '')
+
         # Flask runtime configuration
         cls.PORT = int(os.getenv('PORT', 5000))
         cls.FLASK_ENV = os.getenv('FLASK_ENV', 'development')

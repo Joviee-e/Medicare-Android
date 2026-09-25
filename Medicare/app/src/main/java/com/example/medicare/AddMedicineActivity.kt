@@ -2,6 +2,7 @@ package com.example.medicare
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
@@ -217,8 +218,57 @@ class AddMedicineActivity : BaseActivity() {
                                 )
                                 AlarmScheduler.scheduleAlarms(this@AddMedicineActivity, apiMed)
                             }
-                            Toast.makeText(this@AddMedicineActivity, "Medicine saved successfully", Toast.LENGTH_SHORT).show()
-                            finish()
+                            // Sync notification state
+                            NotificationHelper.syncNotifications(this@AddMedicineActivity)
+
+                            // Check for safety alerts from Medication Intelligence pipeline
+                            val allergyAlert = body.alerts?.find { it.type == "allergy" || it.priority == "high" }
+                            val interactionAlert = body.alerts?.find { it.type == "interaction" }
+
+                            if (allergyAlert != null) {
+                                androidx.appcompat.app.AlertDialog.Builder(this@AddMedicineActivity)
+                                    .setTitle("🔴 Medication Safety Alert")
+                                    .setMessage(allergyAlert.message)
+                                    .setCancelable(false)
+                                    .setPositiveButton("Ask AI to Explain") { _, _ ->
+                                        val intent = Intent(this@AddMedicineActivity, AIAssistantActivity::class.java).apply {
+                                            putExtra("ai_prompt", "Can you explain the potential allergy concern for ${request.name}?")
+                                            putExtra("context_title", allergyAlert.title)
+                                            putExtra("context_message", allergyAlert.message)
+                                            putExtra("context_type", "allergy")
+                                        }
+                                        startActivity(intent)
+                                        finish()
+                                    }
+                                    .setNegativeButton("I Understand") { _, _ ->
+                                        Toast.makeText(this@AddMedicineActivity, "Medicine saved. Please consult your physician.", Toast.LENGTH_LONG).show()
+                                        finish()
+                                    }
+                                    .show()
+                            } else if (interactionAlert != null) {
+                                androidx.appcompat.app.AlertDialog.Builder(this@AddMedicineActivity)
+                                    .setTitle("⚠️ Potential Interaction Alert")
+                                    .setMessage(interactionAlert.message)
+                                    .setCancelable(false)
+                                    .setPositiveButton("Ask AI to Explain") { _, _ ->
+                                        val intent = Intent(this@AddMedicineActivity, AIAssistantActivity::class.java).apply {
+                                            putExtra("ai_prompt", "Can you explain the potential medication interaction for ${request.name}?")
+                                            putExtra("context_title", interactionAlert.title)
+                                            putExtra("context_message", interactionAlert.message)
+                                            putExtra("context_type", "interaction")
+                                        }
+                                        startActivity(intent)
+                                        finish()
+                                    }
+                                    .setNegativeButton("Dismiss") { _, _ ->
+                                        Toast.makeText(this@AddMedicineActivity, "Medicine saved successfully", Toast.LENGTH_SHORT).show()
+                                        finish()
+                                    }
+                                    .show()
+                            } else {
+                                Toast.makeText(this@AddMedicineActivity, "Medicine saved successfully", Toast.LENGTH_SHORT).show()
+                                finish()
+                            }
                         } else {
                             val errMsg = RetrofitClient.parseErrorMessage(response)
                             Toast.makeText(this@AddMedicineActivity, errMsg, Toast.LENGTH_SHORT).show()

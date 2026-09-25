@@ -62,6 +62,29 @@ This document outlines the system integration status, API specifications, and te
   * *Status*: Incomplete. Currently, there is no Appointment UI in the Android mobile application. This remains purely a backend functionality.
 
 ---
+### E. AI Assistant & Chatbot
+* **AI Chat**: `POST /api/ai/chat`
+  * **DTOs**: `ChatRequest` -> `ChatResponse`
+  * **Android screen**: `AIAssistantActivity` (Integrated with Google Gemini backend service, clinical context, and fallback)
+
+### F. Medication Intelligence & Safety
+* **Analyze Medication**: `POST /api/medicines/analyze` or `POST /api/medications/analyze`
+  * **DTOs**: `MedicineRequest` -> `AnalyzeMedicationResponse`
+  * **Android screen**: `AddMedicineActivity` (Safety alerts dialog, cross-reactivity warnings, guidance)
+
+### G. Machine Learning (Adherence Risk)
+* **Adherence Prediction**: `GET /api/ml/adherence`
+  * **DTOs**: None -> `MlAdherenceResponse`
+  * **Android screen**: `AIAssistantActivity` (Contextual personalization), `HomeActivity` (Prioritized alerts)
+
+### H. Patient Notifications
+* **Get Notifications**: `GET /api/notifications`
+  * **DTOs**: None -> `GetNotificationsResponse`
+  * **Android screen**: Top-right notification bell (`NotificationHelper`, `HomeActivity`)
+* **Mark Read**: `POST /api/notifications/{id}/read`
+* **Clear Notifications**: `POST /api/notifications/clear`
+
+---
 
 ## 3. Integration & Flow Validation Status
 
@@ -69,33 +92,21 @@ This document outlines the system integration status, API specifications, and te
 * **End-to-End Authentication**: Connected Android's registration and login forms to Flask/MongoDB. Credentials and JWT session tokens are validated, saved locally via `SessionManager`, and sent in the headers of all protected requests.
 * **Patient Profile & Accessibility Sync**: Connected profile views to read/write details and haptic/voice/contrast configurations from MongoDB.
 * **Medication CRUD & Log Compliance**: Connected list fetching, card creation, editing, deletion, and compliance logging actions (mark as Taken/Skipped/Snoozed) to live backend endpoints.
-* **Global Error Handling**: Added custom parser logic to decode non-2xx API error payloads and show user-friendly error toast notifications.
-* **Global 401 Redirects**: Handled unauthorized or expired user sessions globally inside the Retrofit OkHttpClient pipeline to force clean redirects back to `LoginActivity`.
-* **Security & Git Hygiene**: Removed `.env` configuration file from Git indexing and added it to `.gitignore` to prevent leaking connection strings. Checked repository history to verify no sensitive credentials were committed in the past.
+* **AI Chatbot Integration**: Connected `AIAssistantActivity` to `POST /api/ai/chat`. Gemini API runs through Flask backend with patient context (medicines, allergies, ML risk score) and clinical guardrails.
+* **Medication Intelligence**: RxNorm normalization and openFDA product label extraction cached in MongoDB `medication_cache`. Deterministic safety engine identifies allergy cross-reactivities and drug interactions.
+* **Machine Learning Adherence**: `RandomForestClassifier` trained on behavioral adherence metrics (F1-score: 94.68%). Serves real-time inference via `/api/ml/adherence` without guessing clinical facts.
+* **Top-Right Notification Sync**: Integrated with backend notifications API. Displays priority indicators (High: red dot, Medium: orange, Low: teal) and provides direct navigation to AI Chatbot with pre-populated clinical context.
+* **Global Error Handling & 401 Redirects**: Decodes error payloads, shows user-friendly toasts, and handles expired sessions safely.
+* **Security & Git Hygiene**: Zero client-side API keys or connection strings; `.env` excluded from version control.
 
 ### Backend
-* **Mock Unit Tests**: 8/8 PASSED. Verified Flask routes and models run correctly with mock database interactions.
-* **Live Integration Tests**: 9/9 PASSED. Runs end-to-end tests validating auth, patient profile, and medicine CRUD flows directly against the MongoDB Atlas cloud instance.
+* **Automated Unit & Integration Tests**: 24/24 PASSED (`test_backend.py` 11/11, `test_ai_medication_ml.py` 13/13).
+* **Live Integration**: Verified with MongoDB Atlas, Google Gemini API, RxNorm REST API, and openFDA label endpoint.
 
 ### Android
-* **Build status**: `.\gradlew compileDebugSources` - **BUILD SUCCESSFUL**.
-* **API integration status**: All main dashboard, medicine, creation, settings, and logging screens are connected and functioning with the API.
+* **Build status**: `.\gradlew compileDebugSources` & `.\gradlew assembleDebug` - **BUILD SUCCESSFUL**.
+* **APK generation**: Debug APK successfully generated and packaged.
 
 ### MongoDB
-* **Collections verified**: `users`, `patients`, `medicines` collections are automatically queried and modified dynamically.
-* **CRUD flows verified**: Registration instantiates users and patients; medicines can be created, updated, and deleted; logs are appended correctly on dose compliance submission.
+* **Collections active**: `users`, `patients`, `medicines`, `medication_cache`, `notifications`, `ml_predictions`.
 
-### End-to-End Flow Verification Result
-1. **User Registration Flow**: PASSED. Registration creates user document + empty patient details in Atlas.
-2. **User Login & Session Flow**: PASSED. Login yields JWT tokens, stored in SharedPreferences. Redirects correctly on start.
-3. **Profile Read & Write**: PASSED. Fetches name/emergency information and updates profile dialog fields.
-4. **Accessibility Persistence**: PASSED. Switches and seek bars sync settings automatically to MongoDB.
-5. **Medicine CRUD Flow**: PASSED. Adding medicines inserts document; editing updates document; deleting shows confirmation and cleans record in database.
-6. **Medication Compliance Flow**: PASSED. Logging Taken/Skipped/Snoozed logs compliance records live to database.
-7. **Session Expiry (401)**: PASSED. Automatically logs out and launches Login screen on unauthorized requests.
-
-### Known Issues
-* **Appointment UI**: The Android app lacks appointment UI interfaces, so the backend appointment endpoints are not visible or integrated in the mobile UI.
-
-### Next Steps
-* Implement Appointment UI screens on the Android client if appointment booking is scheduled for mobile support.

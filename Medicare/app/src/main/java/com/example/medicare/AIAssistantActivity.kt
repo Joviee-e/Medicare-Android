@@ -1,15 +1,18 @@
 package com.example.medicare
 
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.medicare.api.ChatRequest
+import com.example.medicare.api.ChatResponse
+import com.example.medicare.api.RetrofitClient
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -19,6 +22,7 @@ class AIAssistantActivity : BaseActivity() {
     private val chatData = mutableListOf<ChatItem>()
     private lateinit var adapter: ChatAdapter
     private lateinit var recyclerChat: RecyclerView
+    private var pendingContextMap: MutableMap<String, String>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,16 +50,30 @@ class AIAssistantActivity : BaseActivity() {
         recyclerChat = findViewById(R.id.recycler_chat)
         recyclerChat.layoutManager = LinearLayoutManager(this)
 
-        // Add initial conversation logs
-        chatData.addAll(listOf(
-            ChatItem("Hello! I'm your MediCare+ AI Assistant. How can I help you manage your health today?", isUser = false),
-            ChatItem("", isUser = false, isSuggestions = true),
-            ChatItem("What are some good low-sodium snacks I can have in the evening?", isUser = true, time = "10:42 AM"),
-            ChatItem(
-                "Here are some excellent low-sodium snack options for the evening that are gentle on your heart and easy to digest:\n\n• Unsalted mixed nuts: A small handful of almonds or walnuts.\n• Fresh fruit: Apple slices or a small bowl of berries.\n• Air-popped popcorn: Plain, without added butter or salt (you can use herbal seasoning).\n• Vegetable sticks: Carrots, celery, or cucumber with a small amount of low-sodium hummus.\n\nWould you like me to add any of these to your shopping list or schedule a reminder?",
-                isUser = false
+        // Check if launched with notification context or prompt
+        val incomingPrompt = intent.getStringExtra("ai_prompt")
+        val incomingTitle = intent.getStringExtra("context_title")
+        val incomingMessage = intent.getStringExtra("context_message")
+        val incomingType = intent.getStringExtra("context_type")
+
+        if (incomingTitle != null && incomingMessage != null) {
+            pendingContextMap = mutableMapOf(
+                "title" to incomingTitle,
+                "alert" to incomingMessage,
+                "type" to (incomingType ?: "general")
             )
-        ))
+            val introText = "I found this medication finding on your account:\n\n• $incomingTitle\n$incomingMessage\n\nHow can I help you understand this finding or discuss precautions?"
+            chatData.addAll(listOf(
+                ChatItem(introText, isUser = false),
+                ChatItem("", isUser = false, isSuggestions = true)
+            ))
+        } else {
+            // Default welcoming messages
+            chatData.addAll(listOf(
+                ChatItem("Hello! I'm your MediCare+ AI Assistant. How can I help you manage your health and medications today?", isUser = false),
+                ChatItem("", isUser = false, isSuggestions = true)
+            ))
+        }
 
         adapter = ChatAdapter(chatData) { suggestionText ->
             sendMessage(suggestionText)
@@ -86,22 +104,63 @@ class AIAssistantActivity : BaseActivity() {
         findViewById<ImageView>(R.id.btn_menu_dots)?.setOnClickListener {
             Toast.makeText(this, "Chat settings coming soon", Toast.LENGTH_SHORT).show()
         }
+
+        // If an explicit inquiry prompt was passed from a notification tap, send it immediately
+        if (incomingPrompt != null && incomingTitle == null) {
+            sendMessage(incomingPrompt)
+        }
     }
 
     private fun sendMessage(text: String) {
         val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
         val currentTime = sdf.format(Date())
 
-        // Add user message
+        // 1. Add user message to UI
         chatData.add(ChatItem(text, isUser = true, time = currentTime))
         adapter.notifyItemInserted(chatData.size - 1)
         recyclerChat.scrollToPosition(chatData.size - 1)
 
-        // Delay AI reply simulation
-        Handler(Looper.getMainLooper()).postDelayed({
-            chatData.add(ChatItem("I understand. This is currently a placeholder AI response.", isUser = false))
-            adapter.notifyItemInserted(chatData.size - 1)
-            recyclerChat.scrollToPosition(chatData.size - 1)
-        }, 800)
+        // 2. Add temporary loading indicator bubble
+        val loadingIndex = chatData.size
+        chatData.add(ChatItem("Consulting MediCare+ AI...", isUser = false))
+        adapter.notifyItemInserted(loadingIndex)
+        recyclerChat.scrollToPosition(loadingIndex)
+
+        // 3. Make live backend API call to Flask -> Gemini
+        val request = ChatRequest(
+            message = text,
+            context = pendingContextMap
+        )
+
+        RetrofitClient.getApiService(this).chatAi(request)
+            .enqueue(object : Callback<ChatResponse> {
+                override fun onResponse(call: Call<ChatResponse>, response: Response<ChatResponse>) {
+                    val body = response.body()
+                    val aiReply = if (response.isSuccessful && body != null && body.success && !body.reply.isNullOrEmpty()) {
+                        body.reply
+                    } else {
+                        "AI explanation service is temporarily unavailable. Based on your records, your medication information remains securely stored. Please consult your physician or pharmacist."
+                    }
+
+                    // Clear pending context after first contextual query
+                    pendingContextMap = null
+
+                    // Replace loading bubble with real AI response
+                    if (loadingIndex in chatData.indices) {
+                        chatData[loadingIndex] = ChatItem(aiReply, isUser = false)
+                        adapter.notifyItemChanged(loadingIndex)
+                        recyclerChat.scrollToPosition(loadingIndex)
+                    }
+                }
+
+                override fun onFailure(call: Call<ChatResponse>, t: Throwable) {
+                    val fallbackText = "Network connection error. Please verify your internet connection or check your medication label."
+                    if (loadingIndex in chatData.indices) {
+                        chatData[loadingIndex] = ChatItem(fallbackText, isUser = false)
+                        adapter.notifyItemChanged(loadingIndex)
+                        recyclerChat.scrollToPosition(loadingIndex)
+                    }
+                }
+            })
     }
 }

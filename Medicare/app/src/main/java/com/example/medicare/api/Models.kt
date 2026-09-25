@@ -124,7 +124,97 @@ data class MedicineRequest(
 data class MedicineResponse(
     val success: Boolean,
     val message: String?,
-    @SerializedName("medicine_id") val medicineId: String?
+    @SerializedName("medicine_id") val medicineId: String?,
+    val medication: MedicationConcept? = null,
+    val alerts: List<MedicationAlert>? = null,
+    val guidance: List<MedicationGuidance>? = null,
+    val ml: MlAdherence? = null
+)
+
+// AI Assistant DTOs
+data class ChatRequest(
+    val message: String,
+    val context: Map<String, String>? = null
+)
+
+data class ChatResponse(
+    val success: Boolean,
+    val reply: String?,
+    val model: String? = null,
+    val disclaimer: String? = null,
+    val message: String? = null
+)
+
+// Medication Intelligence & Safety DTOs
+data class MedicationConcept(
+    val name: String,
+    @SerializedName("normalized_name") val normalizedName: String? = null,
+    val rxcui: String? = null,
+    val ingredients: List<String>? = null,
+    @SerializedName("drug_class") val drugClass: String? = null
+)
+
+data class MedicationAlert(
+    val type: String,
+    val priority: String,
+    val title: String,
+    val message: String,
+    @SerializedName("matched_allergen") val matchedAllergen: String? = null,
+    @SerializedName("other_medication") val otherMedication: String? = null,
+    val source: String? = null
+)
+
+data class MedicationGuidance(
+    val type: String,
+    val category: String? = null,
+    val message: String,
+    val source: String? = null
+)
+
+data class MlAdherence(
+    @SerializedName("adherence_risk") val adherenceRisk: String,
+    val confidence: Float? = null,
+    val insight: String? = null,
+    val priority: String? = null
+)
+
+data class AnalyzeMedicationRequest(
+    val name: String
+)
+
+data class AnalyzeMedicationResponse(
+    val success: Boolean,
+    val medication: MedicationConcept? = null,
+    val alerts: List<MedicationAlert>? = null,
+    val guidance: List<MedicationGuidance>? = null,
+    val ml: MlAdherence? = null,
+    val message: String? = null
+)
+
+// Notification DTOs
+data class ApiNotification(
+    @SerializedName("_id") val id: String,
+    @SerializedName("patient_id") val patientId: String,
+    @SerializedName("medicine_id") val medicineId: String? = null,
+    @SerializedName("medicine_name") val medicineName: String? = null,
+    val title: String,
+    val message: String,
+    val priority: String,
+    val type: String,
+    @SerializedName("context_for_ai") val contextForAi: String? = null,
+    @SerializedName("is_read") val isRead: Boolean = false,
+    @SerializedName("created_at") val createdAt: String? = null
+)
+
+data class GetNotificationsResponse(
+    val success: Boolean,
+    val count: Int,
+    val notifications: List<ApiNotification>
+)
+
+data class MlAdherenceResponse(
+    val success: Boolean,
+    val ml: MlAdherence
 )
 
 data class ApiLog(

@@ -54,6 +54,12 @@ def create_indexes():
         # Appointment collection indexes
         database.appointments.create_index([("patient_id", 1), ("date_time", 1)])
         database.appointments.create_index([("doctor_id", 1), ("date_time", 1)])
+        # Medication cache index
+        database.medication_cache.create_index("input_name", unique=True)
+        # Notifications collection indexes
+        database.notifications.create_index([("patient_id", 1), ("created_at", -1)])
+        # ML predictions index
+        database.ml_predictions.create_index([("patient_id", 1), ("created_at", -1)])
         logger.info("MongoDB indexes successfully created.")
     except Exception as e:
         logger.error(f"Error creating indexes: {str(e)}")
@@ -73,3 +79,13 @@ def get_medicines_collection():
 
 def get_appointments_collection():
     return get_db().appointments
+
+def get_medication_cache_collection():
+    return get_db().medication_cache
+
+def get_notifications_collection():
+    return get_db().notifications
+
+def get_ml_predictions_collection():
+    return get_db().ml_predictions
+

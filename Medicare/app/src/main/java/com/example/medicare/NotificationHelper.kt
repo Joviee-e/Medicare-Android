@@ -1,6 +1,8 @@
 package com.example.medicare
 
+import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,12 +10,19 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.medicare.api.GetNotificationsResponse
+import com.example.medicare.api.RetrofitClient
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.Chip
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 object NotificationHelper {
 
@@ -22,49 +31,86 @@ object NotificationHelper {
         val title: String,
         val message: String,
         val time: String,
-        val type: String, // "reminder", "refill", "health"
-        val actionLabel: String = "Take Now"
+        val type: String, // "allergy", "interaction", "warning", "guidance", "adherence", "reminder", "refill", "health"
+        val priority: String = "low", // "high", "medium", "low"
+        val actionLabel: String = "Explain with AI",
+        val contextForAi: String? = null,
+        val medicineId: String? = null
     )
 
-    // In-memory notification store for the active session
-    val activeNotifications = mutableListOf(
-        NotificationItem(
-            id = "notif_1",
-            title = "Morning Dose: Metformin 500mg",
-            message = "Scheduled for 8:00 AM with food. Don't forget your morning dose.",
-            time = "Today, 8:00 AM",
-            type = "reminder",
-            actionLabel = "Log Dose"
-        ),
-        NotificationItem(
-            id = "notif_2",
-            title = "Refill Alert: Atorvastatin 20mg",
-            message = "Only 3 days of medication remaining in your current supply.",
-            time = "Yesterday",
-            type = "refill",
-            actionLabel = "View Supply"
-        ),
-        NotificationItem(
-            id = "notif_3",
-            title = "Afternoon Dose: Aspirin 100mg",
-            message = "Scheduled for 1:00 PM after lunch.",
-            time = "Today, 1:00 PM",
-            type = "reminder",
-            actionLabel = "Log Dose"
-        ),
-        NotificationItem(
-            id = "notif_4",
-            title = "Daily Health Tip: Hydration",
-            message = "Drink a full glass of water with your tablets to improve absorption.",
-            time = "2 days ago",
-            type = "health",
-            actionLabel = "Got It"
-        )
-    )
+    // In-memory prioritized notifications list
+    val activeNotifications = mutableListOf<NotificationItem>()
+
+    // Priority ordering helper
+    private fun priorityRank(p: String): Int = when (p.lowercase()) {
+        "high" -> 0
+        "medium" -> 1
+        else -> 2
+    }
+
+    /**
+     * Fetch live prioritized notifications from the backend and merge into active list.
+     */
+    fun syncNotifications(context: Context, onComplete: (() -> Unit)? = null) {
+        val sessionManager = SessionManager(context)
+        if (!sessionManager.isLoggedIn()) {
+            onComplete?.invoke()
+            return
+        }
+
+        RetrofitClient.getApiService(context).getNotifications(unreadOnly = false)
+            .enqueue(object : Callback<GetNotificationsResponse> {
+                override fun onResponse(call: Call<GetNotificationsResponse>, response: Response<GetNotificationsResponse>) {
+                    val body = response.body()
+                    if (response.isSuccessful && body != null && body.success) {
+                        activeNotifications.clear()
+                        for (n in body.notifications) {
+                            val actionTxt = when (n.type) {
+                                "allergy", "interaction", "warning", "guidance", "adherence" -> "Explain with AI"
+                                "reminder" -> "Log Dose"
+                                "refill" -> "View Supply"
+                                else -> "Review"
+                            }
+                            val timeStr = n.createdAt?.take(10) ?: "Recent"
+                            activeNotifications.add(
+                                NotificationItem(
+                                    id = n.id,
+                                    title = n.title,
+                                    message = n.message,
+                                    time = timeStr,
+                                    type = n.type,
+                                    priority = n.priority,
+                                    actionLabel = actionTxt,
+                                    contextForAi = n.contextForAi,
+                                    medicineId = n.medicineId
+                                )
+                            )
+                        }
+                        // Sort by priority (high > medium > low)
+                        activeNotifications.sortBy { priorityRank(it.priority) }
+                    }
+                    onComplete?.invoke()
+                }
+
+                override fun onFailure(call: Call<GetNotificationsResponse>, t: Throwable) {
+                    onComplete?.invoke()
+                }
+            })
+    }
+
+    fun addNotification(item: NotificationItem) {
+        // Prevent duplicate IDs
+        activeNotifications.removeAll { it.id == item.id }
+        activeNotifications.add(0, item)
+        activeNotifications.sortBy { priorityRank(it.priority) }
+    }
 
     fun show(activity: FragmentActivity) {
-        val sheet = NotificationBottomSheet()
-        sheet.show(activity.supportFragmentManager, "NotificationBottomSheet")
+        // First sync with backend, then show sheet
+        syncNotifications(activity) {
+            val sheet = NotificationBottomSheet()
+            sheet.show(activity.supportFragmentManager, "NotificationBottomSheet")
+        }
     }
 
     class NotificationBottomSheet : BottomSheetDialogFragment() {
@@ -116,6 +162,12 @@ object NotificationHelper {
             }
 
             btnClearAll.setOnClickListener {
+                // Call backend clear endpoint
+                RetrofitClient.getApiService(requireContext()).clearNotifications()
+                    .enqueue(object : Callback<com.example.medicare.api.BaseResponse> {
+                        override fun onResponse(call: Call<com.example.medicare.api.BaseResponse>, response: Response<com.example.medicare.api.BaseResponse>) {}
+                        override fun onFailure(call: Call<com.example.medicare.api.BaseResponse>, t: Throwable) {}
+                    })
                 activeNotifications.clear()
                 applyFilter()
             }
@@ -127,9 +179,16 @@ object NotificationHelper {
             displayedItems.clear()
             if (currentFilter == "all") {
                 displayedItems.addAll(activeNotifications)
+            } else if (currentFilter == "health") {
+                // Include allergy, interaction, warning, guidance, adherence in health tab
+                displayedItems.addAll(activeNotifications.filter { 
+                    it.type in listOf("health", "allergy", "interaction", "warning", "guidance", "adherence") 
+                })
             } else {
                 displayedItems.addAll(activeNotifications.filter { it.type == currentFilter })
             }
+
+            displayedItems.sortBy { priorityRank(it.priority) }
 
             if (displayedItems.isEmpty()) {
                 recycler.visibility = View.GONE
@@ -141,13 +200,29 @@ object NotificationHelper {
                     items = displayedItems,
                     onActionClick = { item ->
                         dismiss()
-                        val intent = Intent(requireContext(), MedicinesActivity::class.java).apply {
-                            flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                        // If finding relates to medication intelligence / safety, open Chatbot with structured context
+                        if (item.type in listOf("allergy", "interaction", "warning", "guidance", "adherence") || item.contextForAi != null) {
+                            val intent = Intent(requireContext(), AIAssistantActivity::class.java).apply {
+                                putExtra("ai_prompt", item.contextForAi ?: "Can you explain this finding: ${item.title}?")
+                                putExtra("context_title", item.title)
+                                putExtra("context_message", item.message)
+                                putExtra("context_type", item.type)
+                            }
+                            startActivity(intent)
+                        } else {
+                            val intent = Intent(requireContext(), MedicinesActivity::class.java).apply {
+                                flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                            }
+                            startActivity(intent)
                         }
-                        startActivity(intent)
                     },
                     onDismissClick = { item ->
                         activeNotifications.removeAll { it.id == item.id }
+                        RetrofitClient.getApiService(requireContext()).markNotificationRead(item.id)
+                            .enqueue(object : Callback<com.example.medicare.api.BaseResponse> {
+                                override fun onResponse(call: Call<com.example.medicare.api.BaseResponse>, response: Response<com.example.medicare.api.BaseResponse>) {}
+                                override fun onFailure(call: Call<com.example.medicare.api.BaseResponse>, t: Throwable) {}
+                            })
                         applyFilter()
                     }
                 )
@@ -162,6 +237,7 @@ object NotificationHelper {
     ) : RecyclerView.Adapter<NotificationAdapter.ViewHolder>() {
 
         class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+            val cardIcon: MaterialCardView = itemView.findViewById(R.id.card_notif_icon)
             val imgType: ImageView = itemView.findViewById(R.id.img_notif_type)
             val txtTitle: TextView = itemView.findViewById(R.id.txt_notif_title)
             val txtMessage: TextView = itemView.findViewById(R.id.txt_notif_message)
@@ -178,25 +254,37 @@ object NotificationHelper {
 
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
             val item = items[position]
-            holder.txtTitle.text = item.title
+            val context = holder.itemView.context
+
+            // Title with priority indicator
+            if (item.priority == "high") {
+                holder.txtTitle.text = "🔴 " + item.title
+                holder.txtTitle.setTextColor(Color.parseColor("#B71C1C"))
+                holder.cardIcon.setCardBackgroundColor(Color.parseColor("#FFEBEE"))
+                holder.imgType.setColorFilter(Color.parseColor("#C62828"))
+                holder.imgType.setImageResource(R.drawable.ic_warning)
+            } else if (item.priority == "medium") {
+                holder.txtTitle.text = "⚠️ " + item.title
+                holder.txtTitle.setTextColor(Color.parseColor("#E65100"))
+                holder.cardIcon.setCardBackgroundColor(Color.parseColor("#FFF3E0"))
+                holder.imgType.setColorFilter(Color.parseColor("#EF6C00"))
+                holder.imgType.setImageResource(R.drawable.ic_warning)
+            } else {
+                holder.txtTitle.text = item.title
+                holder.txtTitle.setTextColor(ContextCompat.getColor(context, R.color.text_primary))
+                holder.cardIcon.setCardBackgroundColor(ContextCompat.getColor(context, R.color.secondary_container))
+                holder.imgType.setColorFilter(ContextCompat.getColor(context, R.color.primary))
+                when (item.type) {
+                    "reminder" -> holder.imgType.setImageResource(R.drawable.ic_pill)
+                    "refill" -> holder.imgType.setImageResource(R.drawable.ic_warning)
+                    "guidance", "adherence", "health" -> holder.imgType.setImageResource(R.drawable.ic_info)
+                    else -> holder.imgType.setImageResource(R.drawable.ic_bell)
+                }
+            }
+
             holder.txtMessage.text = item.message
             holder.txtTime.text = item.time
             holder.btnAction.text = item.actionLabel
-
-            when (item.type) {
-                "reminder" -> {
-                    holder.imgType.setImageResource(R.drawable.ic_pill)
-                }
-                "refill" -> {
-                    holder.imgType.setImageResource(R.drawable.ic_warning)
-                }
-                "health" -> {
-                    holder.imgType.setImageResource(R.drawable.ic_info)
-                }
-                else -> {
-                    holder.imgType.setImageResource(R.drawable.ic_bell)
-                }
-            }
 
             holder.btnAction.setOnClickListener {
                 onActionClick(item)

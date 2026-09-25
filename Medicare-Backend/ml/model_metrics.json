@@ -1,0 +1,90 @@
+{
+  "algorithm": "RandomForestClassifier",
+  "n_estimators": 100,
+  "max_depth": 7,
+  "n_train_samples": 1280,
+  "n_test_samples": 320,
+  "features": [
+    "medication_count",
+    "daily_medication_events",
+    "missed_doses_7d",
+    "missed_doses_30d",
+    "adherence_percentage",
+    "reminder_response_rate",
+    "consecutive_missed_days",
+    "medication_complexity"
+  ],
+  "target_classes": [
+    "LOW",
+    "MEDIUM",
+    "HIGH"
+  ],
+  "accuracy": 1.0,
+  "precision_macro": 1.0,
+  "precision_weighted": 1.0,
+  "recall_macro": 1.0,
+  "recall_weighted": 1.0,
+  "f1_score_macro": 1.0,
+  "f1_score_weighted": 1.0,
+  "confusion_matrix": [
+    [
+      140,
+      0,
+      0
+    ],
+    [
+      0,
+      115,
+      0
+    ],
+    [
+      0,
+      0,
+      65
+    ]
+  ],
+  "feature_importances": {
+    "medication_count": 0.0045,
+    "daily_medication_events": 0.0518,
+    "missed_doses_7d": 0.0935,
+    "missed_doses_30d": 0.1512,
+    "adherence_percentage": 0.2023,
+    "reminder_response_rate": 0.2666,
+    "consecutive_missed_days": 0.0173,
+    "medication_complexity": 0.2128
+  },
+  "classification_report": {
+    "LOW": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 140.0
+    },
+    "MEDIUM": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 115.0
+    },
+    "HIGH": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 65.0
+    },
+    "accuracy": 1.0,
+    "macro avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 320.0
+    },
+    "weighted avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 320.0
+    }
+  },
+  "disclaimer": "The model was initially trained and evaluated using synthetic medication-adherence data for application prototyping. The results do not constitute clinical validation."
+}

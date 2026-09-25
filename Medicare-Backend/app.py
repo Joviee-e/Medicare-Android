@@ -43,13 +43,20 @@ def create_app():
     from routes.doctor import doctor_bp
     from routes.medicine import medicine_bp
     from routes.appointment import appointment_bp
+    from routes.ai import ai_bp
+    from routes.notification import notification_bp
+    from routes.ml import ml_bp
 
     # Register Blueprints
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(patient_bp, url_prefix='/api/patients')
     app.register_blueprint(doctor_bp, url_prefix='/api/doctors')
     app.register_blueprint(medicine_bp, url_prefix='/api/medicines')
+    app.register_blueprint(medicine_bp, url_prefix='/api/medications', name='medications')
     app.register_blueprint(appointment_bp, url_prefix='/api/appointments')
+    app.register_blueprint(ai_bp, url_prefix='/api/ai')
+    app.register_blueprint(notification_bp, url_prefix='/api/notifications')
+    app.register_blueprint(ml_bp, url_prefix='/api/ml')
 
     # URL Routing configurations: allow trailing slashes flexibly
     app.url_map.strict_slashes = False

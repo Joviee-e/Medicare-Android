@@ -45,4 +45,26 @@ interface ApiService {
 
     @POST("medicines/{id}/log")
     fun logCompliance(@Path("id") id: String, @Body request: LogRequest): Call<BaseResponse>
+
+    // AI Assistant endpoint
+    @POST("ai/chat")
+    fun chatAi(@Body request: ChatRequest): Call<ChatResponse>
+
+    // Notification endpoints
+    @GET("notifications")
+    fun getNotifications(@Query("unread_only") unreadOnly: Boolean = false): Call<GetNotificationsResponse>
+
+    @POST("notifications/{id}/read")
+    fun markNotificationRead(@Path("id") id: String): Call<BaseResponse>
+
+    @POST("notifications/clear")
+    fun clearNotifications(): Call<BaseResponse>
+
+    // Medication Intelligence endpoint
+    @POST("medications/analyze")
+    fun analyzeMedication(@Body request: AnalyzeMedicationRequest): Call<AnalyzeMedicationResponse>
+
+    // ML Adherence endpoint
+    @GET("ml/adherence")
+    fun getAdherence(): Call<MlAdherenceResponse>
 }

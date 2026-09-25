@@ -88,6 +88,7 @@ class HomeActivity : BaseActivity() {
         super.onResume()
         checkPermissionsAndAlarms()
         loadDailySchedule()
+        NotificationHelper.syncNotifications(this)
     }
 
     private fun checkPermissionsAndAlarms() {
