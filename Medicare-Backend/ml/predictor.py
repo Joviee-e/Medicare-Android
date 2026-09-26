@@ -10,6 +10,8 @@ from datetime import datetime, timezone, timedelta
 import numpy as np
 import joblib
 
+import threading
+
 logger = logging.getLogger(__name__)
 
 FEATURE_NAMES = [
@@ -26,18 +28,57 @@ FEATURE_NAMES = [
 TARGET_MAP = {0: "LOW", 1: "MEDIUM", 2: "HIGH"}
 
 _model = None
+_model_lock = threading.Lock()
+_model_load_attempted = False
+
+def init_ml_model():
+    """
+    Initializes and warms up the ML adherence model at application startup.
+    Ensures the model and all scikit-learn modules are loaded once into process memory
+    before incoming web requests arrive.
+    """
+    return get_model()
+
+def reset_model():
+    """Reset model cache for testing or hot reloading."""
+    global _model, _model_load_attempted
+    with _model_lock:
+        _model = None
+        _model_load_attempted = False
 
 def get_model():
-    global _model
-    if _model is None:
+    """
+    Thread-safe model retrieval. Loads adherence_model.joblib once into process memory.
+    If the model fails to load, logs the error and returns None without blocking subsequent requests.
+    """
+    global _model, _model_load_attempted
+    if _model is not None:
+        return _model
+
+    with _model_lock:
+        if _model is not None:
+            return _model
+        if _model_load_attempted and _model is None:
+            return None
+
+        _model_load_attempted = True
         model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "adherence_model.joblib")
-        if os.path.exists(model_path):
-            try:
-                _model = joblib.load(model_path)
-                logger.info(f"Loaded adherence ML model from {model_path}")
-            except Exception as e:
-                logger.error(f"Error loading adherence ML model: {e}")
-                _model = None
+        if not os.path.exists(model_path):
+            logger.warning(f"Adherence ML model file not found at {model_path}")
+            _model = None
+            return None
+
+        try:
+            # Pre-import scikit-learn modules explicitly under lock
+            import sklearn
+            import sklearn.ensemble
+            logger.info(f"Loading adherence ML model from {model_path} (scikit-learn {sklearn.__version__})...")
+            _model = joblib.load(model_path)
+            logger.info("Adherence ML model successfully loaded and cached in process memory.")
+        except Exception as e:
+            logger.error(f"Error loading adherence ML model: {e}", exc_info=True)
+            _model = None
+
     return _model
 
 def extract_features_from_patient_data(medicines: list) -> dict:
@@ -119,30 +160,68 @@ def predict_adherence_risk(medicines: list) -> dict:
     """
     Evaluates medication adherence risk based on behavioral schedule metrics.
     Returns risk level (LOW, MEDIUM, HIGH), probabilities, and personalized insights.
+    If the ML model is unavailable or inference fails, safely returns an unavailable
+    status without fabricating an ML prediction.
     """
-    features_dict = extract_features_from_patient_data(medicines)
-    feature_vector = [features_dict[name] for name in FEATURE_NAMES]
+    try:
+        features_dict = extract_features_from_patient_data(medicines)
+    except Exception as e:
+        logger.warning(f"Error extracting adherence features: {e}")
+        return {
+            "available": False,
+            "adherence_risk": "UNAVAILABLE",
+            "confidence": 0.0,
+            "probabilities": {},
+            "insight": "Adherence pattern evaluation is currently unavailable.",
+            "priority": "low",
+            "recommended_action": "none",
+            "features": {},
+            "disclaimer": "Adherence evaluation is currently unavailable."
+        }
+
+    feature_vector = [features_dict.get(name, 0) for name in FEATURE_NAMES]
 
     model = get_model()
-    if model is not None:
-        try:
-            X = np.array([feature_vector], dtype=np.float32)
-            pred_class = int(model.predict(X)[0])
-            risk_label = TARGET_MAP.get(pred_class, "LOW")
-            probs = model.predict_proba(X)[0]
-            confidence = float(np.max(probs))
-            prob_dict = {
-                "LOW": round(float(probs[0]), 3),
-                "MEDIUM": round(float(probs[1]), 3),
-                "HIGH": round(float(probs[2]), 3)
-            }
-        except Exception as e:
-            logger.warning(f"Error during ML inference, using heuristic: {e}")
-            risk_label, confidence, prob_dict = _heuristic_adherence_risk(features_dict)
-    else:
-        risk_label, confidence, prob_dict = _heuristic_adherence_risk(features_dict)
+    if model is None:
+        logger.info("Adherence ML model is unavailable; omitting ML prediction.")
+        return {
+            "available": False,
+            "adherence_risk": "UNAVAILABLE",
+            "confidence": 0.0,
+            "probabilities": {},
+            "insight": "Adherence pattern evaluation is currently unavailable.",
+            "priority": "low",
+            "recommended_action": "none",
+            "features": features_dict,
+            "disclaimer": "Adherence ML model is currently unavailable."
+        }
 
-    # Generate personalized recommendations
+    try:
+        X = np.array([feature_vector], dtype=np.float32)
+        pred_class = int(model.predict(X)[0])
+        risk_label = TARGET_MAP.get(pred_class, "LOW")
+        probs = model.predict_proba(X)[0]
+        confidence = float(np.max(probs))
+        prob_dict = {
+            "LOW": round(float(probs[0]), 3),
+            "MEDIUM": round(float(probs[1]), 3),
+            "HIGH": round(float(probs[2]), 3)
+        }
+    except Exception as e:
+        logger.warning(f"Error during ML inference: {e}")
+        return {
+            "available": False,
+            "adherence_risk": "UNAVAILABLE",
+            "confidence": 0.0,
+            "probabilities": {},
+            "insight": "Adherence pattern evaluation is currently unavailable.",
+            "priority": "low",
+            "recommended_action": "none",
+            "features": features_dict,
+            "disclaimer": "Adherence ML inference encountered an error."
+        }
+
+    # Generate personalized recommendations based on verified model prediction
     if risk_label == "HIGH":
         insight = (
             f"High adherence-risk pattern detected based on recent schedule complexity ({features_dict['medication_count']} medications) "
@@ -167,6 +246,7 @@ def predict_adherence_risk(medicines: list) -> dict:
         recommended_action = "maintain_routine"
 
     return {
+        "available": True,
         "adherence_risk": risk_label,
         "confidence": round(confidence, 3),
         "probabilities": prob_dict,
@@ -177,15 +257,3 @@ def predict_adherence_risk(medicines: list) -> dict:
         "disclaimer": "This prediction assists reminder personalization and does not constitute a clinical evaluation."
     }
 
-def _heuristic_adherence_risk(features: dict):
-    """Fallback rule-based risk evaluation if ML model is unavailable."""
-    missed_7d = features.get("missed_doses_7d", 0)
-    adherence_pct = features.get("adherence_percentage", 100.0)
-    med_count = features.get("medication_count", 1)
-
-    if missed_7d >= 3 or adherence_pct < 65.0 or (med_count >= 5 and missed_7d >= 2):
-        return "HIGH", 0.85, {"LOW": 0.05, "MEDIUM": 0.15, "HIGH": 0.80}
-    elif missed_7d >= 1 or adherence_pct < 85.0 or med_count >= 3:
-        return "MEDIUM", 0.75, {"LOW": 0.15, "MEDIUM": 0.70, "HIGH": 0.15}
-    else:
-        return "LOW", 0.90, {"LOW": 0.85, "MEDIUM": 0.10, "HIGH": 0.05}

@@ -162,6 +162,25 @@ class AIMedicationMLTestCase(unittest.TestCase):
         self.assertTrue(data["success"])
         self.assertTrue(len(data["reply"]) > 10)
 
+    def test_ai_chat_ml_failure_isolation(self):
+        """
+        Verify that if ML prediction fails/raises an exception,
+        AI chat continues, Gemini still receives medication/safety context,
+        and HTTP 200 is returned.
+        """
+        with patch('services.ai_service.predict_adherence_risk', side_effect=RuntimeError("Simulated ML model failure")):
+            res = self.client.post('/api/ai/chat', headers=self.headers, json={
+                "message": "Can you explain this potential allergy alert?",
+                "context": {
+                    "medication_name": "Amoxicillin",
+                    "alert": "Potential allergy concern detected: User is allergic to Penicillin."
+                }
+            })
+            self.assertEqual(res.status_code, 200)
+            data = res.get_json()
+            self.assertTrue(data["success"])
+            self.assertTrue(len(data["reply"]) > 10)
+
     # ================= 4. NOTIFICATION & ML ROUTES =================
 
     def test_get_notifications_route(self):

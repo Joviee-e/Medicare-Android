@@ -77,12 +77,22 @@ def build_user_context(patient_id: str, extra_context: dict = None) -> str:
             m_times = ", ".join(med.get("reminder_times", []))
             context_lines.append(f"{idx}. {m_name} ({m_dose}) - Frequency: {m_freq}, Scheduled Times: [{m_times}]")
 
-        # 3. Behavioral ML Adherence Insights
-        ml_insight = predict_adherence_risk(medicines)
-        context_lines.append(f"\nAdherence Pattern Summary:")
-        context_lines.append(f"- Adherence Rate: {ml_insight['features']['adherence_percentage']}%")
-        context_lines.append(f"- Adherence Risk Level: {ml_insight['adherence_risk']}")
-        context_lines.append(f"- Adherence Insight: {ml_insight['insight']}")
+        # 3. Behavioral ML Adherence Insights (safely isolated)
+        try:
+            ml_insight = predict_adherence_risk(medicines)
+            if ml_insight and ml_insight.get("available", True) and ml_insight.get("adherence_risk") not in (None, "UNAVAILABLE"):
+                context_lines.append(f"\nAdherence Pattern Summary:")
+                features = ml_insight.get("features", {})
+                if "adherence_percentage" in features:
+                    context_lines.append(f"- Adherence Rate: {features['adherence_percentage']}%")
+                context_lines.append(f"- Adherence Risk Level: {ml_insight.get('adherence_risk', 'LOW')}")
+                if ml_insight.get("insight"):
+                    context_lines.append(f"- Adherence Insight: {ml_insight['insight']}")
+            else:
+                context_lines.append("\nAdherence Pattern Summary: ML adherence insight is currently unavailable.")
+        except Exception as e:
+            logger.warning(f"ML adherence evaluation failed gracefully: {e}")
+            context_lines.append("\nAdherence Pattern Summary: ML adherence insight is currently unavailable.")
     else:
         context_lines.append("\nCurrent Active Medications: None currently scheduled in Medicare.")
 
@@ -128,8 +138,12 @@ def generate_ai_chat_response(patient_id: str, user_message: str, extra_context:
             "disclaimer": "AI Assistant does not replace professional medical advice."
         }
 
-    # Assemble structured clinical context
-    user_context = build_user_context(patient_id, extra_context)
+    # Assemble structured clinical context safely
+    try:
+        user_context = build_user_context(patient_id, extra_context)
+    except Exception as e:
+        logger.error(f"Error assembling user context: {e}", exc_info=True)
+        user_context = "Patient profile and medication context currently unavailable."
 
     prompt = f"""{SYSTEM_PROMPT}
 

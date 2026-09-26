@@ -264,7 +264,7 @@ Actual HIGH              0               0                 65
 ### Render Deployment (Backend)
 The backend is completely containerless and runs natively on Render Python web services:
 - **Build Command:** `pip install -r requirements.txt`
-- **Start Command:** `gunicorn app:app --workers 2 --bind 0.0.0.0:$PORT`
+- **Start Command:** `gunicorn app:app --workers 1 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT`
 - **Environment Variables on Render Dashboard:**
   - `GEMINI_API_KEY`
   - `GEMINI_MODEL=gemini-flash-lite-latest`

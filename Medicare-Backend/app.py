@@ -37,6 +37,13 @@ def create_app():
     # Initialize MongoDB Connection
     init_db()
 
+    # Pre-load ML adherence model once at application startup
+    try:
+        from ml.predictor import init_ml_model
+        init_ml_model()
+    except Exception as e:
+        logger.warning(f"ML model startup pre-load warning: {e}")
+
     # Import Blueprints
     from routes.auth import auth_bp
     from routes.patient import patient_bp
