@@ -202,8 +202,13 @@ object NotificationHelper {
                         dismiss()
                         // If finding relates to medication intelligence / safety, open Chatbot with structured context
                         if (item.type in listOf("allergy", "interaction", "warning", "guidance", "adherence") || item.contextForAi != null) {
+                            val prompt = if (!item.contextForAi.isNullOrBlank()) {
+                                "Can you explain this finding for \"${item.title}\"? Details: ${item.message}. What precautions or adherence recommendations should I follow based on my schedule and health predictions?"
+                            } else {
+                                "Can you explain this medication finding: \"${item.title}\" (${item.message}), and what precautions or steps I should take based on my medication routine?"
+                            }
                             val intent = Intent(requireContext(), AIAssistantActivity::class.java).apply {
-                                putExtra("ai_prompt", item.contextForAi ?: "Can you explain this finding: ${item.title}?")
+                                putExtra("ai_prompt", prompt)
                                 putExtra("context_title", item.title)
                                 putExtra("context_message", item.message)
                                 putExtra("context_type", item.type)

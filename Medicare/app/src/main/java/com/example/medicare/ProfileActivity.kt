@@ -368,7 +368,7 @@ class ProfileActivity : BaseActivity() {
             val month = calendar.get(Calendar.MONTH)
             val day = calendar.get(Calendar.DAY_OF_MONTH)
 
-            DatePickerDialog(this, { _, selectedYear, selectedMonth, selectedDay ->
+            DialogHelper.createDatePickerDialog(this, { _, selectedYear, selectedMonth, selectedDay ->
                 val dobStr = String.format("%02d-%02d-%d", selectedDay, selectedMonth + 1, selectedYear)
                 editDob.setText(dobStr)
             }, year, month, day).show()
@@ -382,6 +382,7 @@ class ProfileActivity : BaseActivity() {
             .create()
 
         dialog.show()
+        DialogHelper.styleDialogButtons(this, dialog)
 
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
             val newName = editName.text.toString().trim()

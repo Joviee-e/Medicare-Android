@@ -56,17 +56,22 @@ class AIAssistantActivity : BaseActivity() {
         val incomingMessage = intent.getStringExtra("context_message")
         val incomingType = intent.getStringExtra("context_type")
 
-        if (incomingTitle != null && incomingMessage != null) {
-            pendingContextMap = mutableMapOf(
-                "title" to incomingTitle,
-                "alert" to incomingMessage,
-                "type" to (incomingType ?: "general")
-            )
-            val introText = "I found this medication finding on your account:\n\n• $incomingTitle\n$incomingMessage\n\nHow can I help you understand this finding or discuss precautions?"
-            chatData.addAll(listOf(
-                ChatItem(introText, isUser = false),
-                ChatItem("", isUser = false, isSuggestions = true)
-            ))
+        val promptToSend = when {
+            !incomingPrompt.isNullOrBlank() -> incomingPrompt
+            incomingTitle != null && incomingMessage != null ->
+                "Can you explain this finding: \"$incomingTitle\" ($incomingMessage), and what precautions or adherence steps I should follow?"
+            else -> null
+        }
+
+        if (promptToSend != null) {
+            if (incomingTitle != null && incomingMessage != null) {
+                pendingContextMap = mutableMapOf(
+                    "title" to incomingTitle,
+                    "alert" to incomingMessage,
+                    "type" to (incomingType ?: "general")
+                )
+            }
+            chatData.add(ChatItem("Hello! I'm your MediCare+ AI Assistant. Reviewing your medication context...", isUser = false))
         } else {
             // Default welcoming messages
             chatData.addAll(listOf(
@@ -105,9 +110,11 @@ class AIAssistantActivity : BaseActivity() {
             Toast.makeText(this, "Chat settings coming soon", Toast.LENGTH_SHORT).show()
         }
 
-        // If an explicit inquiry prompt was passed from a notification tap, send it immediately
-        if (incomingPrompt != null && incomingTitle == null) {
-            sendMessage(incomingPrompt)
+        // If an explicit inquiry prompt or finding was passed, automatically dispatch the explanation inquiry
+        if (promptToSend != null) {
+            recyclerChat.post {
+                sendMessage(promptToSend)
+            }
         }
     }
 

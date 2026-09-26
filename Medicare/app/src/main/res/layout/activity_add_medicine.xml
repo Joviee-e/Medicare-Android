@@ -154,8 +154,9 @@
                     android:textColorHint="@color/neutral_gray"
                     android:textSize="15sp" />
 
-                <!-- Custom Spinner layout equivalent for visual design match -->
+                <!-- Custom Spinner layout for selectable dosage units (mg, ml, etc.) -->
                 <LinearLayout
+                    android:id="@+id/layout_dosage_unit"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
@@ -163,10 +164,13 @@
                     android:background="@drawable/bg_input_selector"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:paddingStart="14dp"
                     android:paddingEnd="14dp">
 
                     <TextView
+                        android:id="@+id/txt_dosage_unit"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"

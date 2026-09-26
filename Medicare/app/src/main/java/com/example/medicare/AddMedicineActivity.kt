@@ -32,6 +32,8 @@ class AddMedicineActivity : BaseActivity() {
     
     private var selectedType = "tablet"
     private var selectedFrequency = "daily"
+    private var selectedDosageUnit = "mg"
+    private val availableDosageUnits = arrayOf("mg", "ml", "mcg", "g", "drops", "tablets", "units")
     private var medId: String? = null // Null if creating, set if editing
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,6 +46,22 @@ class AddMedicineActivity : BaseActivity() {
         val inputDosage = findViewById<EditText>(R.id.input_dosage_value)
         val txtStartDate = findViewById<TextView>(R.id.txt_start_date)
         val txtEndDate = findViewById<TextView>(R.id.txt_end_date)
+        val txtDosageUnit = findViewById<TextView>(R.id.txt_dosage_unit)
+        val layoutDosageUnit = findViewById<LinearLayout>(R.id.layout_dosage_unit)
+
+        // Setup Dosage Unit Selection Dialog
+        txtDosageUnit?.text = selectedDosageUnit
+        layoutDosageUnit?.setOnClickListener {
+            val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Select Dosage Unit")
+                .setItems(availableDosageUnits) { _, which ->
+                    selectedDosageUnit = availableDosageUnits[which]
+                    txtDosageUnit?.text = selectedDosageUnit
+                }
+            val dialog = builder.create()
+            dialog.show()
+            DialogHelper.styleDialogButtons(this, dialog)
+        }
 
         // Setup Reminders RecyclerView
         val recyclerReminders = findViewById<RecyclerView>(R.id.recycler_reminders)
@@ -69,9 +87,13 @@ class AddMedicineActivity : BaseActivity() {
                 inputName.setText(editName)
             }
             if (editDose != null) {
-                // Strip out non-numeric characters for dosage input
-                val numericDose = editDose.takeWhile { it.isDigit() }
+                val numericDose = editDose.filter { it.isDigit() || it == '.' }
                 inputDosage.setText(numericDose.ifEmpty { editDose })
+                val foundUnit = availableDosageUnits.find { editDose.contains(it, ignoreCase = true) }
+                if (foundUnit != null) {
+                    selectedDosageUnit = foundUnit
+                    txtDosageUnit?.text = selectedDosageUnit
+                }
             }
             fetchMedicineDetails(medId!!)
         }
@@ -149,7 +171,7 @@ class AddMedicineActivity : BaseActivity() {
             return
         }
 
-        val finalDosage = if (dosageVal.isNotEmpty()) "$dosageVal mg" else "1 unit"
+        val finalDosage = if (dosageVal.isNotEmpty()) "$dosageVal $selectedDosageUnit" else "1 unit"
 
         val request = MedicineRequest(
             name = name,
@@ -226,7 +248,7 @@ class AddMedicineActivity : BaseActivity() {
                             val interactionAlert = body.alerts?.find { it.type == "interaction" }
 
                             if (allergyAlert != null) {
-                                androidx.appcompat.app.AlertDialog.Builder(this@AddMedicineActivity)
+                                val dialog = androidx.appcompat.app.AlertDialog.Builder(this@AddMedicineActivity)
                                     .setTitle("🔴 Medication Safety Alert")
                                     .setMessage(allergyAlert.message)
                                     .setCancelable(false)
@@ -244,9 +266,11 @@ class AddMedicineActivity : BaseActivity() {
                                         Toast.makeText(this@AddMedicineActivity, "Medicine saved. Please consult your physician.", Toast.LENGTH_LONG).show()
                                         finish()
                                     }
-                                    .show()
+                                    .create()
+                                dialog.show()
+                                DialogHelper.styleDialogButtons(this@AddMedicineActivity, dialog)
                             } else if (interactionAlert != null) {
-                                androidx.appcompat.app.AlertDialog.Builder(this@AddMedicineActivity)
+                                val dialog = androidx.appcompat.app.AlertDialog.Builder(this@AddMedicineActivity)
                                     .setTitle("⚠️ Potential Interaction Alert")
                                     .setMessage(interactionAlert.message)
                                     .setCancelable(false)
@@ -264,7 +288,9 @@ class AddMedicineActivity : BaseActivity() {
                                         Toast.makeText(this@AddMedicineActivity, "Medicine saved successfully", Toast.LENGTH_SHORT).show()
                                         finish()
                                     }
-                                    .show()
+                                    .create()
+                                dialog.show()
+                                DialogHelper.styleDialogButtons(this@AddMedicineActivity, dialog)
                             } else {
                                 Toast.makeText(this@AddMedicineActivity, "Medicine saved successfully", Toast.LENGTH_SHORT).show()
                                 finish()
@@ -311,6 +337,16 @@ class AddMedicineActivity : BaseActivity() {
                 textView.setTypeface(null, Typeface.NORMAL)
             }
         }
+
+        // Auto-switch unit recommendation if appropriate
+        val txtDosageUnit = findViewById<TextView>(R.id.txt_dosage_unit)
+        if (selectedCardId == R.id.card_type_syrup && selectedDosageUnit == "mg") {
+            selectedDosageUnit = "ml"
+            txtDosageUnit?.text = "ml"
+        } else if ((selectedCardId == R.id.card_type_tablet || selectedCardId == R.id.card_type_capsule) && selectedDosageUnit == "ml") {
+            selectedDosageUnit = "mg"
+            txtDosageUnit?.text = "mg"
+        }
     }
 
     private fun updateFrequencySelection(selectedChipId: Int) {
@@ -331,7 +367,7 @@ class AddMedicineActivity : BaseActivity() {
 
     private fun showDatePicker(targetTextView: TextView) {
         val calendar = Calendar.getInstance()
-        val picker = DatePickerDialog(
+        val picker = DialogHelper.createDatePickerDialog(
             this,
             { _, year, month, dayOfMonth ->
                 val formattedDate = String.format("%02d-%02d-%d", dayOfMonth, month + 1, year)
@@ -365,7 +401,7 @@ class AddMedicineActivity : BaseActivity() {
             }
         }
 
-        val picker = TimePickerDialog(
+        val picker = DialogHelper.createTimePickerDialog(
             this,
             { _, hourOfDay, minute ->
                 val amPm = if (hourOfDay < 12) "AM" else "PM"
@@ -415,9 +451,14 @@ class AddMedicineActivity : BaseActivity() {
     private fun populateFields(apiMed: ApiMedicine) {
         findViewById<EditText>(R.id.input_med_name).setText(apiMed.name)
         
-        // Strip out " mg" or other units for numeric value
-        val numericDose = apiMed.dosage.takeWhile { it.isDigit() }
+        // Strip out non-numeric characters for dosage input
+        val numericDose = apiMed.dosage.filter { it.isDigit() || it == '.' }
         findViewById<EditText>(R.id.input_dosage_value).setText(numericDose.ifEmpty { apiMed.dosage })
+        val foundUnit = availableDosageUnits.find { apiMed.dosage.contains(it, ignoreCase = true) }
+        if (foundUnit != null) {
+            selectedDosageUnit = foundUnit
+            findViewById<TextView>(R.id.txt_dosage_unit)?.text = selectedDosageUnit
+        }
         
         // Set Type card selection
         selectedType = apiMed.type

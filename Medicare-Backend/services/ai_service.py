@@ -25,7 +25,7 @@ CRITICAL SAFETY & ETHICAL RULES:
 4. NEVER invent or hallucinate drug interactions, allergies, or medical instructions that are not documented in the provided context or verified pharmacopeia.
 5. If a safety finding, allergy alert, or medication interaction concern is present in the context, clearly explain what the verified medication information states, and advise the user to review the finding directly with their prescribing physician or pharmacist.
 6. For severe or life-threatening symptoms (e.g., severe chest pain, sudden difficulty breathing, signs of stroke, anaphylaxis, severe bleeding), immediately urge the user to seek emergency medical care (dial 911 / 112 / local emergency services).
-7. Always provide a concise, natural, and helpful answer, followed by an appropriate medical disclaimer.
+7. Keep answers concise, natural, helpful, and direct. DO NOT append a medical disclaimer at the end of routine conversational, informational, or schedule-related answers. ONLY include a brief medical disclaimer if the user explicitly asks for a medical diagnosis of symptoms/illnesses, asks what disease they might have, or asks to alter/stop a prescription.
 """
 
 _client = None
@@ -175,11 +175,12 @@ Please respond accurately, kindly, and concisely based on the verified context a
                     contents=prompt
                 )
                 if response and response.text:
+                    is_diagnosis_or_rx = _is_diagnosis_or_rx_query(user_message)
                     return {
                         "success": True,
                         "reply": response.text.strip(),
                         "model": model_name,
-                        "disclaimer": "MediCare+ AI Assistant provides educational information and does not replace professional medical consultation."
+                        "disclaimer": "MediCare+ AI Assistant provides educational information and does not replace professional medical consultation." if is_diagnosis_or_rx else ""
                     }
             except Exception as e:
                 logger.warning(f"Gemini call failed with model '{model_name}': {e}")
@@ -223,3 +224,16 @@ def _generate_rule_based_fallback(user_message: str, user_context: str, extra_co
         "Thank you for your question. While the AI explanation service is temporarily unavailable, your scheduled medications "
         "and verified precautions remain recorded in Medicare. For specific medical questions or symptoms, please consult your doctor or pharmacist."
     )
+
+def _is_diagnosis_or_rx_query(user_message: str) -> bool:
+    """Returns True only when the query seeks a diagnosis, asks for disease identification, or asks to alter medication."""
+    if not user_message:
+        return False
+    msg = user_message.lower()
+    diagnosis_keywords = [
+        "diagnose", "diagnosis", "what disease", "what condition", "do i have",
+        "am i suffering from", "what is wrong with me", "change my dose",
+        "change my prescription", "stop taking my medication", "prescribe",
+        "can i stop taking", "cure my", "what illness"
+    ]
+    return any(k in msg for k in diagnosis_keywords)

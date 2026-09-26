@@ -18,8 +18,7 @@
             android:layout_width="16dp"
             android:layout_height="16dp"
             android:src="@drawable/ic_robot_filled"
-            android:layout_gravity="center"
-            app:tint="@color/white"/>
+            android:layout_gravity="center"/>
     </androidx.cardview.widget.CardView>
 
     <com.google.android.material.card.MaterialCardView

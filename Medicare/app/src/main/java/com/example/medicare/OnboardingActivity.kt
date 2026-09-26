@@ -167,7 +167,7 @@ class OnboardingActivity : BaseActivity() {
         val month = calendar.get(Calendar.MONTH)
         val day = calendar.get(Calendar.DAY_OF_MONTH)
 
-        val picker = DatePickerDialog(this, { _, selectedYear, selectedMonth, selectedDay ->
+        val picker = DialogHelper.createDatePickerDialog(this, { _, selectedYear, selectedMonth, selectedDay ->
             val dobStr = String.format("%02d-%02d-%d", selectedDay, selectedMonth + 1, selectedYear)
             inputDob.setText(dobStr)
             

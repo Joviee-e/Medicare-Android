@@ -120,8 +120,7 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/ic_pill_filled"
-                    app:tint="@color/white" />
+                    android:src="@drawable/ic_pill_filled" />
             </FrameLayout>
             <TextView
                 android:layout_width="wrap_content"
@@ -244,8 +243,7 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/ic_robot_filled"
-                    app:tint="@color/white" />
+                    android:src="@drawable/ic_robot_filled" />
             </FrameLayout>
             <TextView
                 android:layout_width="wrap_content"
