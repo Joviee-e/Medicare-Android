@@ -1,0 +1,37 @@
+# Medicare UI Implementation Journal
+
+This file tracks the implementation progress, visual design alignment details, and tasks completed.
+
+## 2026-08-07
+
+### Core Setup & Architecture Planning
+- [x] Gathered requirements from design specs in `DESIGN.md` and screenshots in `UI` folder.
+- [x] Selected native Android Activity-based UI implementation using `ConstraintLayout` and `RecyclerView`.
+- [x] Defined task list in `task.md`.
+- [x] Created `journal` file.
+
+### Implementation Phase
+- [x] Core Resources Setup: Updated `colors.xml` with hex colors and defined light theme defaults in `themes.xml`.
+- [x] Vector Icons: Designed and added vector drawables for all custom UI elements (home, pill, map_pin, robot, profile, search, plus, edit/pencil, trash, calendar, clock, warning, stars, target, mic, send, restaurant, snooze, info).
+- [x] Custom progress indicator: Created `CircularProgressView.kt` to draw the custom circular progress ring on the dashboard.
+- [x] Custom Bottom Navigation: Programmed `layout_bottom_navigation.xml` with active horizontal pill capsule states and created a centralized `NavigationHelper.kt` to wire intent transitions.
+- [x] Home Page Screen: Built `HomeActivity.kt` and `activity_home.xml` with greeting, progress card, upcoming card, and today's schedule recycler view.
+- [x] Medicines List Screen: Built `MedicinesActivity.kt` and `activity_medicines.xml` with toolbar, search card, horizontally scrolling filter chips, card recycler, and floating action button.
+- [x] Add Medicine Screen: Built `AddMedicineActivity.kt` and `activity_add_medicine.xml` with input forms, 2x2 grid type selection, frequency chip bar, date picker rows, reminder times list, and save actions.
+- [x] AI Health Agent Screen: Built `AIAssistantActivity.kt` and `activity_ai_assistant.xml` with warning disclaimer, chat list (assistant messages, suggestion chips, user bubble with timestamps), and bottom message inputs.
+- [x] Pharmacy Screen: Built `PharmacyActivity.kt` and `activity_pharmacy.xml` with a simulated grid road map layout, location FAB, floating search card, and list of pharmacy cards with Navigate/Call buttons.
+- [x] Profile Screen: Built `ProfileActivity.kt` and `activity_profile.xml` with avatar photo editing overlays, blood group details, red background emergency contact widget with call button, accessibility seekbar/toggles, cloud sync data backups, and red sign-out buttons.
+- [x] Reminder Alarm Screen: Built `ReminderAlarmActivity.kt` and `activity_reminder_alarm.xml` as a fullscreen isolated interruption layout with top colored banner, large alarm badge, and action buttons.
+- [x] Verified overall compilable build via Gradle compilation checks.
+
+### Interactive Prototype Phase
+- [x] Bottom Navigation Transitions: Set up `Intent.FLAG_ACTIVITY_REORDER_TO_FRONT` to enable fast, single-instance transitions across all five main activities.
+- [x] Home page interactions: Wired navigation links on the "Take Now" button, upcoming card, View All link, and notification bell toast alert.
+- [x] Schedule interaction: Linked clicking any item in the schedule to launch `ReminderAlarmActivity`.
+- [x] Medicines list interactions: Implemented horizontal selector chip states and lists filtering (All, Morning, Evening, As Needed). Wired the edit button to pre-fill inputs in the creation screen, and bound delete button to an `AlertDialog` confirming removal.
+- [x] Add medicine form logic: Configured single-selection layouts for type and frequency, hooked start/end date clicks to `DatePickerDialog`, set add time button to `TimePickerDialog`, and enabled runtime removals of reminder times.
+- [x] AI Assistant Chat Flow: Programmed text input, send action, auto-scrolling message streams, delayed placeholder replies, voice/attachment/menu toast warnings, and suggestion chip bindings.
+- [x] Pharmacy details & actions: Bound navigate and call triggers to feedback toasts, and set card clicks to show an details popup dialog.
+- [x] Settings & Sign Out: Enabled toggles, slider controls, details toasts, and a sign-out confirmation dialog returning to the dashboard.
+- [x] Alarm Responses: Configured alarm actions to toast their status and finish the overlay.
+- [x] Re-ran compiler checks to confirm successful Gradle compilations.

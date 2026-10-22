@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="16dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginTop="6dp"
+    android:layout_marginBottom="6dp"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="1dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="#E8ECEF"
+    app:cardBackgroundColor="@color/white">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="14dp">
+
+        <!-- Notification Icon Container -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_notif_icon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp"
+            app:cardBackgroundColor="@color/secondary_container"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/img_notif_type"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_pill"
+                android:layout_gravity="center"
+                app:tint="@color/primary" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Notification Title -->
+        <TextView
+            android:id="@+id/txt_notif_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Morning Dose: Metformin 500mg"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
+            app:layout_constraintLeft_toRightOf="@id/card_notif_icon"
+            app:layout_constraintRight_toLeftOf="@id/btn_dismiss_notif"
+            app:layout_constraintTop_toTopOf="@id/card_notif_icon" />
+
+        <!-- Dismiss button -->
+        <ImageView
+            android:id="@+id/btn_dismiss_notif"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_close_circle"
+            app:tint="@color/neutral_gray"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="@id/txt_notif_title" />
+
+        <!-- Notification Message -->
+        <TextView
+            android:id="@+id/txt_notif_message"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Scheduled for 8:00 AM with food. Tap to log dose."
+            android:textSize="13sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginTop="4dp"
+            app:layout_constraintLeft_toLeftOf="@id/txt_notif_title"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/txt_notif_title" />
+
+        <!-- Timestamp & Action Row -->
+        <LinearLayout
+            android:id="@+id/layout_notif_bottom"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="10dp"
+            app:layout_constraintLeft_toLeftOf="@id/txt_notif_title"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/txt_notif_message">
+
+            <TextView
+                android:id="@+id/txt_notif_time"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Today, 8:00 AM"
+                android:textSize="12sp"
+                android:textColor="@color/neutral_gray" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_notif_action"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="Take Now"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:minHeight="0dp"
+                android:minWidth="0dp" />
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

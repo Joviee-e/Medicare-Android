@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="16dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="8dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp"
+    app:strokeWidth="0dp"
+    app:cardBackgroundColor="@color/white">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp"
+        android:paddingEnd="16dp">
+
+        <!-- Dynamic Side border color strip -->
+        <View
+            android:id="@+id/view_status_strip"
+            android:layout_width="6dp"
+            android:layout_height="0dp"
+            android:background="@color/primary"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <!-- Left circular icon holder -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/med_icon_bg"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="16dp"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="#E0F2F1"
+            app:layout_constraintLeft_toRightOf="@id/view_status_strip"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+            <ImageView
+                android:id="@+id/img_med_icon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_pill"
+                android:layout_gravity="center"
+                app:tint="@color/primary"/>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Title & Subtitle Info -->
+        <TextView
+            android:id="@+id/txt_med_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Atorvastatin"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:layout_marginStart="16dp"
+            app:layout_constraintLeft_toRightOf="@id/med_icon_bg"
+            app:layout_constraintRight_toLeftOf="@id/btn_edit"
+            app:layout_constraintTop_toTopOf="parent"/>
+
+        <TextView
+            android:id="@+id/txt_med_dose"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="20mg • Tablet"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="2dp"
+            app:layout_constraintLeft_toRightOf="@id/med_icon_bg"
+            app:layout_constraintRight_toLeftOf="@id/btn_edit"
+            app:layout_constraintTop_toBottomOf="@id/txt_med_name"/>
+
+        <!-- Schedule / Alarm Time status row -->
+        <LinearLayout
+            android:id="@+id/layout_status_row"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintLeft_toRightOf="@id/med_icon_bg"
+            app:layout_constraintRight_toLeftOf="@id/btn_edit"
+            app:layout_constraintTop_toBottomOf="@id/txt_med_dose">
+
+            <ImageView
+                android:id="@+id/img_status_small"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_clock"
+                app:tint="@color/primary"/>
+
+            <TextView
+                android:id="@+id/txt_status_info"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Next: 8:00 PM (Once Daily)"
+                android:textSize="13sp"
+                android:textColor="@color/primary"
+                android:textStyle="bold"
+                android:layout_marginStart="6dp"/>
+        </LinearLayout>
+
+        <!-- Edit & Delete Buttons -->
+        <ImageView
+            android:id="@+id/btn_edit"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_pencil"
+            android:layout_marginEnd="16dp"
+            app:layout_constraintRight_toLeftOf="@id/btn_delete"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/btn_delete"
+            app:layout_constraintVertical_chainStyle="packed"/>
+
+        <ImageView
+            android:id="@+id/btn_delete"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_trash"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="16dp"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/btn_edit"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>
