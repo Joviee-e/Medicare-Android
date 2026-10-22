@@ -1,47 +1,140 @@
-# MediCare+ Android UI & Interactive Prototype
+# MediCare+ Android App
 
-A high-fidelity native Android user interface and navigation prototype recreated from visual screens. 
+This Android application is the patient-facing front end for the MediCare+ health platform. It provides a polished mobile workflow for medication tracking, safety awareness, AI support, and local health information access.
 
-This is a UI-focused prototype built to demonstrate navigation flows, native pickers, runtime lists modification, and interactive chatbot bubbles without any backend/network dependencies.
+## What the app does
 
----
+The app lets users:
 
-## 📱 Key Prototype Features
+- manage medication schedules and reminders
+- add, edit, and remove prescriptions
+- log compliance actions such as taken, snoozed, and skipped
+- view AI-powered health guidance in a conversational interface
+- review notifications with contextual prioritization
+- explore nearby pharmacies and local care options
+- configure accessibility preferences and profile details
 
-1. **Dashboard Home**: Dynamic circular progress bar, upcoming dose cards, and click actions navigating directly to medication alarms.
-2. **prescriptions List**: Multi-state filter chips (All, Morning, Evening, As Needed) that update the medicine cards feed. Support for editing values and deleting items with popup confirmations.
-3. **Add Medicine Form**:
-   - Single-select cards for type (Tablet, Capsule, Syrup, Injection).
-   - Frequency configuration chips (Daily, Weekly, As Needed).
-   - Android `DatePickerDialog` for start/end calendar dates.
-   - `TimePickerDialog` to append reminder alerts to the RecyclerView times feed.
-4. **AI Health Chatbot**: Message entry bar enabling text input, auto-scrolling message threads, suggestion chips prompts, delayed placeholder AI responses, and warning toasts for unimplemented voice/attachments.
-5. **Nearby Pharmacy Map**: Simulated street grid map overlay with pins, location FAB targets, search card fields, and pharmacy lists with navigate/call buttons. Tapping cards displays schedule and distance details.
-6. **Profile Settings**: Accessibility switches (contrast, voice, haptics), sliders, document backup links, and a Sign Out validation dialog redirecting clean stacks back to the dashboard.
-7. **Reminder Alarm Overlay**: Standalone alarm overlay with take/snooze/skip loggers.
+## App highlights
 
----
+### Dashboard and home experience
+- circular completion summary for medication adherence
+- upcoming medication cards and schedule visualization
+- direct navigation into reminder or alert flows
 
-## 🛠 Tech Stack
+### Medicine management
+- filter by time-of-day or medication state
+- add medicines with dosage, frequency, and date settings
+- native date/time dialogs for scheduling
+- edit/delete actions with confirmation flows
 
-- **Platform**: Native Android (API Level 33+)
-- **Language**: Kotlin
-- **Layouts**: ConstraintLayout (Primary), LinearLayout, FrameLayout, NestedScrollView
-- **UI Libraries**: Material Design Components (`com.google.android.material:material`)
-- **Graphics**: Custom Canvas painting (`CircularProgressView`) and Vector Drawables
+### AI assistant
+- support chat interface with suggestion chips
+- conversation history and auto-scrolling behavior
+- contextual payloads sent to the backend AI service
+- fallback handling for unavailable or unsupported actions
 
----
+### Pharmacy and location features
+- map-style UI with pharmacy points and distance metadata
+- search and listing flows for pharmacy options
+- built-in action buttons for navigation and call workflows
 
-## 🚀 Setup & Build Instructions
+### Profile and accessibility
+- contrast mode, haptics, and voice settings
+- user profile details and sign-out confirmation flow
+- consistent user experience across onboarding and dashboard screens
 
-Open this repository in Android Studio or compile using the Gradle wrapper:
+## Technology stack
 
-### Compile Sources
+- Kotlin
+- Android SDK / Jetpack
+- Material Design Components
+- Retrofit + OkHttp for API communication
+- Gson for JSON parsing
+- Geoapify location data integration
+- Custom UI components and drawable resources
+
+## Project structure
+
+```text
+Medicare/
+├── app/
+│   ├── build.gradle.kts
+│   ├── src/
+│   │   ├── androidTest/
+│   │   ├── main/
+│   │   └── test/
+│   └── proguard-rules.pro
+├── gradle/
+├── icons/
+├── UI/
+│   ├── home page.png
+│   ├── medicine list.png
+│   ├── near pharmacy.png
+│   ├── profile.png
+│   ├── reminder alarm.png
+│   └── ai health agent.png
+├── build.gradle.kts
+├── gradle.properties
+├── gradlew
+├── gradlew.bat
+├── settings.gradle.kts
+└── README.md
+```
+
+## Setup and build
+
+### Prerequisites
+
+- Android Studio
+- Java / JDK 11+
+- Android SDK configured for the project
+- Local backend running if you want live API integration
+
+### Build a debug APK
+
 ```bash
+cd Medicare
+./gradlew assembleDebug
+```
+
+### Compile sources
+
+```bash
+cd Medicare
 ./gradlew compileDebugSources
 ```
 
-### Build Debug APK
-```bash
-./gradlew assembleDebug
+### Environment configuration
+
+The app reads a Geoapify key at build time from a local `.env` file or the backend `.env` file.
+
+```env
+GEOAPIFY_API_KEY=your_geoapify_key
 ```
+
+## Backend integration
+
+This app is designed to communicate with the Flask backend in `Medicare-Backend/` via REST APIs. The API contract includes:
+
+- auth flows
+- profile management
+- medication CRUD
+- notifications
+- AI chat
+- medicine safety analysis
+- ML adherence predictor
+
+## UI references
+
+The design assets under `Medicare/UI/` capture the app's main screens, including:
+
+- Home dashboard
+- Medicine list
+- AI assistant
+- Nearby pharmacy view
+- Profile settings
+- Reminder alarm
+
+## Notes
+
+This app is a polished mobile experience and integration layer for a healthcare product. For the full project context, architecture, and API details, see the repository-level README and backend documentation.
