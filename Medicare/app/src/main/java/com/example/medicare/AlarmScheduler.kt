@@ -133,7 +133,23 @@ object AlarmScheduler {
                 val pendingIntent = PendingIntent.getBroadcast(context, requestCode, intent, flags)
 
                 if (canScheduleExactAlarms(context)) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        val showIntent = PendingIntent.getActivity(
+                            context,
+                            requestCode,
+                            Intent(context, ReminderAlarmActivity::class.java).apply {
+                                putExtra("med_id", medicine.id)
+                                putExtra("med_name", medicine.name)
+                                putExtra("med_dose", medicine.dosage)
+                                putExtra("med_time", timeStr)
+                                putExtra("med_type", medicine.type)
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                            },
+                            flags
+                        )
+                        val alarmClockInfo = AlarmManager.AlarmClockInfo(targetCal.timeInMillis, showIntent)
+                        alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
+                    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         alarmManager.setExactAndAllowWhileIdle(
                             AlarmManager.RTC_WAKEUP,
                             targetCal.timeInMillis,
@@ -153,7 +169,7 @@ object AlarmScheduler {
                         pendingIntent
                     )
                 }
-                Log.d("AlarmScheduler", "Scheduled alarm for ${medicine.name} at ${targetCal.time}")
+                Log.d("AlarmScheduler", "Scheduled alarm clock for ${medicine.name} at ${targetCal.time}")
             } catch (e: Exception) {
                 Log.e("AlarmScheduler", "Error scheduling alarm index $index for ${medicine.name}", e)
             }
@@ -234,7 +250,23 @@ object AlarmScheduler {
             val pendingIntent = PendingIntent.getBroadcast(context, requestCode, intent, flags)
 
             if (canScheduleExactAlarms(context)) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    val showIntent = PendingIntent.getActivity(
+                        context,
+                        requestCode,
+                        Intent(context, ReminderAlarmActivity::class.java).apply {
+                            putExtra("med_id", medicineId)
+                            putExtra("med_name", name)
+                            putExtra("med_dose", dosage)
+                            putExtra("med_time", timeStr)
+                            putExtra("med_type", type)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                        },
+                        flags
+                    )
+                    val alarmClockInfo = AlarmManager.AlarmClockInfo(targetCal.timeInMillis, showIntent)
+                    alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     alarmManager.setExactAndAllowWhileIdle(
                         AlarmManager.RTC_WAKEUP,
                         targetCal.timeInMillis,
@@ -254,9 +286,87 @@ object AlarmScheduler {
                     pendingIntent
                 )
             }
-            Log.d("AlarmScheduler", "Scheduled next alarm for $name at ${targetCal.time}")
+            Log.d("AlarmScheduler", "Scheduled next alarm clock for $name at ${targetCal.time}")
         } catch (e: Exception) {
             Log.e("AlarmScheduler", "Error scheduling next alarm for $name", e)
+        }
+    }
+
+    fun scheduleSnoozeAlarm(
+        context: Context,
+        medicineId: String,
+        name: String,
+        dosage: String,
+        timeStr: String,
+        type: String = "tablet",
+        snoozeMinutes: Int = 15
+    ) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        try {
+            val targetCal = Calendar.getInstance().apply {
+                add(Calendar.MINUTE, snoozeMinutes)
+            }
+
+            val intent = Intent(context, AlarmReceiver::class.java).apply {
+                putExtra("med_id", medicineId)
+                putExtra("med_name", name)
+                putExtra("med_dose", dosage)
+                putExtra("med_time", timeStr)
+                putExtra("med_frequency", "daily")
+                putExtra("med_end_date", "")
+                putExtra("med_index", 999) // Snooze slot
+                putExtra("med_type", type)
+            }
+
+            val requestCode = getRequestCode(medicineId, 999)
+            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
+
+            val pendingIntent = PendingIntent.getBroadcast(context, requestCode, intent, flags)
+
+            if (canScheduleExactAlarms(context)) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    val showIntent = PendingIntent.getActivity(
+                        context,
+                        requestCode,
+                        Intent(context, ReminderAlarmActivity::class.java).apply {
+                            putExtra("med_id", medicineId)
+                            putExtra("med_name", name)
+                            putExtra("med_dose", dosage)
+                            putExtra("med_time", timeStr)
+                            putExtra("med_type", type)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                        },
+                        flags
+                    )
+                    val alarmClockInfo = AlarmManager.AlarmClockInfo(targetCal.timeInMillis, showIntent)
+                    alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        targetCal.timeInMillis,
+                        pendingIntent
+                    )
+                } else {
+                    alarmManager.setExact(
+                        AlarmManager.RTC_WAKEUP,
+                        targetCal.timeInMillis,
+                        pendingIntent
+                    )
+                }
+            } else {
+                alarmManager.set(
+                    AlarmManager.RTC_WAKEUP,
+                    targetCal.timeInMillis,
+                    pendingIntent
+                )
+            }
+            Log.d("AlarmScheduler", "Scheduled snooze alarm for $name in $snoozeMinutes min at ${targetCal.time}")
+        } catch (e: Exception) {
+            Log.e("AlarmScheduler", "Error scheduling snooze alarm for $name", e)
         }
     }
 

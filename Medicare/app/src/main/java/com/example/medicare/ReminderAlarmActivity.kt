@@ -36,6 +36,23 @@ class ReminderAlarmActivity : BaseActivity() {
 
         sessionManager = SessionManager(this)
 
+        // Wake screen up, turn screen on, and display over lock screen
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+            val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as? android.app.KeyguardManager
+            keyguardManager?.requestDismissKeyguard(this, null)
+        } else {
+            @Suppress("DEPRECATION")
+            window.addFlags(
+                android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                android.view.WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD or
+                android.view.WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+                android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+            )
+        }
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
         val txtName = findViewById<TextView>(R.id.txt_alarm_med_name)
         val txtDose = findViewById<TextView>(R.id.txt_alarm_med_dose)
 
@@ -48,6 +65,12 @@ class ReminderAlarmActivity : BaseActivity() {
         val medName = intent.getStringExtra("med_name") ?: "Medication"
         val medDose = intent.getStringExtra("med_dose") ?: "Dose"
         val medTime = intent.getStringExtra("med_time") ?: "08:00 AM"
+
+        // Cancel notification for this reminder if present
+        val notifManager = getSystemService(Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
+        val notifIndex = intent.getIntExtra("med_index", 0)
+        notifManager?.cancel(medId.hashCode() + notifIndex)
+        notifManager?.cancel(medId.hashCode() + 999)
 
         txtName.text = medName
         txtDose.text = medDose
@@ -80,12 +103,20 @@ class ReminderAlarmActivity : BaseActivity() {
             }
         }
 
-        // 2. Reminder Sounds (RingtoneManager play sound once)
+        // 2. Reminder Sounds (RingtoneManager play alarm sound)
         val isSoundEnabled = sessionManager.isReminderSoundsEnabled()
         if (isSoundEnabled) {
             try {
-                val notificationUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-                ringtone = RingtoneManager.getRingtone(applicationContext, notificationUri)
+                val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                ringtone = RingtoneManager.getRingtone(applicationContext, alarmUri)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    ringtone?.audioAttributes = android.media.AudioAttributes.Builder()
+                        .setUsage(android.media.AudioAttributes.USAGE_ALARM)
+                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build()
+                }
                 ringtone?.play()
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -119,16 +150,36 @@ class ReminderAlarmActivity : BaseActivity() {
         val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
         btnTaken.setOnClickListener {
+            stopAlerts()
             logCompliance(medId, todayStr, medTime, "taken", "Medication logged as Taken!")
         }
 
         btnSnooze.setOnClickListener {
+            stopAlerts()
+            AlarmScheduler.scheduleSnoozeAlarm(
+                context = this,
+                medicineId = medId,
+                name = medName,
+                dosage = medDose,
+                timeStr = medTime,
+                type = medType ?: "tablet",
+                snoozeMinutes = 15
+            )
             logCompliance(medId, todayStr, medTime, "snoozed", "Snoozed reminder for 15 minutes")
         }
 
         btnSkip.setOnClickListener {
+            stopAlerts()
             logCompliance(medId, todayStr, medTime, "skipped", "Medication logged as Skipped")
         }
+    }
+
+    private fun stopAlerts() {
+        try {
+            ringtone?.stop()
+            vibrator?.cancel()
+            tts?.stop()
+        } catch (e: Exception) {}
     }
 
     private fun logCompliance(medId: String, date: String, time: String, status: String, toastMessage: String) {
