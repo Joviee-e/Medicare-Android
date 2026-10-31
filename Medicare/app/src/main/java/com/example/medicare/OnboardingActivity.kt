@@ -148,17 +148,31 @@ class OnboardingActivity : BaseActivity() {
 
         // Handle navigation triggers
         btnNext.setOnClickListener {
-            saveCurrentStepData(isSkippingStep = false)
+            saveCurrentStepData()
         }
 
         btnSkip.setOnClickListener {
-            saveCurrentStepData(isSkippingStep = true)
+            if (currentStep < 4) {
+                showStep(currentStep + 1)
+            } else {
+                saveOnboardingStateAndExit("SKIPPED")
+            }
         }
 
         btnSkipAll.setOnClickListener {
             // Save state as SKIPPED and route to Home immediately
             saveOnboardingStateAndExit("SKIPPED")
         }
+
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (currentStep > 1) {
+                    showStep(currentStep - 1)
+                } else {
+                    finish()
+                }
+            }
+        })
     }
 
     private fun showDatePicker() {
@@ -205,19 +219,24 @@ class OnboardingActivity : BaseActivity() {
 
     private fun prepopulateFields() {
         existingProfile?.let { profile ->
-            inputPhone.setText(profile.phoneNational ?: profile.phone ?: "")
             profile.phoneCountryCode?.let { code ->
                 selectedUserCountry = PhoneNumberHelper.getCountryByCode(code)
                 btnObPhoneCountry.text = getCountryLabel(selectedUserCountry)
+                PhoneNumberHelper.applyCountryInputFilter(inputPhone, selectedUserCountry)
             } ?: run {
                 profile.phone?.let { full ->
                     PhoneNumberHelper.parseInternationalNumber(full)?.let { pair ->
                         selectedUserCountry = pair.first
                         btnObPhoneCountry.text = getCountryLabel(selectedUserCountry)
-                        inputPhone.setText(pair.second)
+                        PhoneNumberHelper.applyCountryInputFilter(inputPhone, selectedUserCountry)
                     }
                 }
             }
+            val userDigits = profile.phoneNational?.filter { it.isDigit() }
+                ?: profile.phone?.filter { it.isDigit() }?.takeLast(selectedUserCountry.nationalDigits)
+                ?: ""
+            inputPhone.setText(userDigits)
+
             inputDob.setText(profile.dateOfBirth ?: "")
             inputAge.setText(profile.age ?: "")
             
@@ -227,7 +246,7 @@ class OnboardingActivity : BaseActivity() {
                 "other" -> rgGender.check(R.id.rb_gender_other)
             }
 
-            selectedBloodGroup = profile.bloodGroup ?: "O+"
+            selectedBloodGroup = profile.bloodGroup?.takeIf { it.isNotEmpty() && it != "Not Specified" } ?: "O+"
             updateBloodGroupSelection()
 
             inputAllergies.setText(profile.medicalInformation?.allergies ?: "")
@@ -235,22 +254,26 @@ class OnboardingActivity : BaseActivity() {
             inputMedications.setText(profile.medicalInformation?.medications ?: "")
 
             val primaryContact = profile.emergencyContacts?.firstOrNull()
-            inputEmergName.setText(primaryContact?.name ?: profile.emergencyContactName ?: "")
-            val primaryEmergPhone = primaryContact?.phone ?: profile.emergencyContactPhone ?: ""
+            inputEmergName.setText(primaryContact?.name?.takeIf { it != "Not Specified" } ?: profile.emergencyContactName?.takeIf { it != "Not Specified" } ?: "")
+            val primaryEmergPhone = primaryContact?.phone?.takeIf { it != "Not Specified" } ?: profile.emergencyContactPhone?.takeIf { it != "Not Specified" } ?: ""
             val primaryEmergCountry = primaryContact?.countryCode ?: ""
             val primaryEmergNational = primaryContact?.phoneNational ?: ""
 
-            inputEmergPhone.setText(primaryEmergNational.ifEmpty { primaryEmergPhone })
             if (primaryEmergCountry.isNotEmpty()) {
                 selectedEmergCountry = PhoneNumberHelper.getCountryByCode(primaryEmergCountry)
                 btnObEmergPhoneCountry.text = getCountryLabel(selectedEmergCountry)
+                PhoneNumberHelper.applyCountryInputFilter(inputEmergPhone, selectedEmergCountry)
             } else if (primaryEmergPhone.isNotEmpty()) {
                 PhoneNumberHelper.parseInternationalNumber(primaryEmergPhone)?.let { pair ->
                     selectedEmergCountry = pair.first
                     btnObEmergPhoneCountry.text = getCountryLabel(selectedEmergCountry)
-                    inputEmergPhone.setText(pair.second)
+                    PhoneNumberHelper.applyCountryInputFilter(inputEmergPhone, selectedEmergCountry)
                 }
             }
+            val emergDigits = primaryEmergNational.filter { it.isDigit() }.ifEmpty {
+                primaryEmergPhone.filter { it.isDigit() }.takeLast(selectedEmergCountry.nationalDigits)
+            }
+            inputEmergPhone.setText(emergDigits)
             
             val relIdx = relationships.indexOf(primaryContact?.relationship ?: "Family")
             if (relIdx >= 0) spinnerEmergRel.setSelection(relIdx)
@@ -259,8 +282,7 @@ class OnboardingActivity : BaseActivity() {
         }
     }
 
-    private fun saveCurrentStepData(isSkippingStep: Boolean) {
-        // Collect local layout parameters
+    private fun saveCurrentStepData() {
         val name = existingProfile?.name ?: sessionManager.getUserName() ?: "Patient"
         val contrastMode = existingProfile?.accessibilitySettings?.contrastMode ?: false
         val voiceInput = existingProfile?.accessibilitySettings?.voiceInput ?: false
@@ -268,7 +290,7 @@ class OnboardingActivity : BaseActivity() {
         val fontSize = existingProfile?.accessibilitySettings?.fontSize ?: 2
         
         // Step 1 fields
-        var phone = inputPhone.text.toString().trim()
+        var rawPhone = inputPhone.text.toString().trim()
         var dob = inputDob.text.toString().trim()
         var age = inputAge.text.toString().trim()
         var gender = ""
@@ -285,54 +307,65 @@ class OnboardingActivity : BaseActivity() {
 
         // Step 3 fields
         var emergName = inputEmergName.text.toString().trim()
-        var emergRel = spinnerEmergRel.selectedItem.toString()
+        var emergRel = spinnerEmergRel.selectedItem?.toString() ?: "Family"
         var emergPhone = inputEmergPhone.text.toString().trim()
 
         // Step 4 fields
         var address = inputAddress.text.toString().trim()
 
-        if (!isSkippingStep) {
-            // Apply current validation rule triggers
-            when (currentStep) {
-                1 -> {
-                    if (!validateUserPhone(showError = true)) {
-                        return
-                    }
-                    if (dob.isEmpty()) {
-                        inputDob.error = "Birth date is required"
-                        return
-                    }
-                    if (age.isEmpty()) {
-                        inputAge.error = "Age is required"
-                        return
-                    }
+        // Validate current step
+        when (currentStep) {
+            1 -> {
+                if (!validateUserPhone(showError = true)) return
+                if (dob.isEmpty()) {
+                    inputDob.error = "Birth date is required"
+                    return
                 }
-                3 -> {
-                    if (emergName.isEmpty()) {
-                        inputEmergName.error = "Contact name is required"
-                        return
-                    }
-                    if (!validateEmergPhone(showError = true)) {
-                        return
-                    }
-                }
-                4 -> {
-                    if (address.isEmpty()) {
-                        inputAddress.error = "Residential address is required"
-                        return
-                    }
+                if (age.isEmpty()) {
+                    inputAge.error = "Age is required"
+                    return
                 }
             }
-        } else {
-            // If skipping, we preserve fields empty or keep whatever was typed
+            2 -> {
+                // Blood group has a default, medical details are optional
+            }
+            3 -> {
+                if (emergName.isEmpty()) {
+                    inputEmergName.error = "Contact name is required"
+                    return
+                }
+                if (!validateEmergPhone(showError = true)) return
+            }
+            4 -> {
+                if (address.isEmpty()) {
+                    inputAddress.error = "Residential address is required"
+                    return
+                }
+            }
         }
 
-        // Determine onboarding status: if we finish step 4, status becomes COMPLETED
-        val nextStatus = if (currentStep == 4 && !isSkippingStep) "COMPLETED" else "IN_PROGRESS"
+        // Fallback to existing profile data if not edited in current/future steps
+        if (rawPhone.isEmpty()) rawPhone = existingProfile?.phoneNational ?: existingProfile?.phone?.filter { it.isDigit() } ?: ""
+        if (dob.isEmpty()) dob = existingProfile?.dateOfBirth ?: ""
+        if (age.isEmpty()) age = existingProfile?.age ?: ""
+        if (gender.isEmpty()) gender = existingProfile?.gender ?: ""
+        if (bloodGroup.isEmpty() || bloodGroup == "Not Specified") bloodGroup = existingProfile?.bloodGroup ?: "O+"
+        if (allergies.isEmpty()) allergies = existingProfile?.medicalInformation?.allergies ?: ""
+        if (conditions.isEmpty()) conditions = existingProfile?.medicalInformation?.conditions ?: ""
+        if (medications.isEmpty()) medications = existingProfile?.medicalInformation?.medications ?: ""
+        if (address.isEmpty()) address = existingProfile?.address ?: ""
+
+        val normalizedPhone = if (rawPhone.isNotEmpty()) {
+            PhoneNumberHelper.getNormalizedNumber(rawPhone, selectedUserCountry.code) ?: rawPhone
+        } else {
+            ""
+        }
+        val phoneNational = rawPhone
+        val phoneCountryCode = selectedUserCountry.code
 
         // Build list of emergency contacts
         val contactsList = mutableListOf<EmergencyContact>()
-        if (emergName.isNotEmpty() || emergPhone.isNotEmpty()) {
+        if (emergName.isNotEmpty() && emergPhone.isNotEmpty()) {
             val normalizedEmerg = PhoneNumberHelper.getNormalizedNumber(emergPhone, selectedEmergCountry.code) ?: emergPhone
             contactsList.add(EmergencyContact(
                 name = emergName,
@@ -342,16 +375,12 @@ class OnboardingActivity : BaseActivity() {
                 phoneNational = emergPhone
             ))
         } else {
-            // Copy existing contacts if empty
             existingProfile?.emergencyContacts?.let { contactsList.addAll(it) }
         }
 
+        val nextStatus = if (currentStep == 4) "COMPLETED" else "IN_PROGRESS"
         val settings = AccessibilitySettings(contrastMode, voiceInput, hapticFeedback, fontSize)
         val medical = MedicalInformation(allergies, conditions, medications)
-
-        val normalizedPhone = PhoneNumberHelper.getNormalizedNumber(phone, selectedUserCountry.code) ?: phone
-        val phoneNational = phone
-        val phoneCountryCode = selectedUserCountry.code
 
         val request = UpdateProfileRequest(
             name = name,
@@ -376,14 +405,33 @@ class OnboardingActivity : BaseActivity() {
                     setLoading(false)
                     if (response.isSuccessful && response.body()?.success == true) {
                         sessionManager.saveOnboardingStatus(nextStatus)
+
+                        // Update in-memory profile
+                        existingProfile = PatientProfile(
+                            id = existingProfile?.id ?: sessionManager.getUserId() ?: "",
+                            name = name,
+                            bloodGroup = bloodGroup,
+                            emergencyContactName = contactsList.firstOrNull()?.name,
+                            emergencyContactPhone = contactsList.firstOrNull()?.phone,
+                            emergencyContacts = contactsList,
+                            dateOfBirth = dob,
+                            age = age,
+                            gender = gender,
+                            phone = normalizedPhone,
+                            address = address,
+                            medicalInformation = medical,
+                            onboardingStatus = nextStatus,
+                            completionPercentage = existingProfile?.completionPercentage,
+                            accessibilitySettings = settings,
+                            phoneCountryCode = phoneCountryCode,
+                            phoneNational = phoneNational
+                        )
                         
                         if (currentStep == 4) {
-                            // Onboarding fully complete!
                             Toast.makeText(this@OnboardingActivity, "Profile onboarding completed successfully!", Toast.LENGTH_SHORT).show()
                             navigateToHome()
                         } else {
-                            // Transition steps locally
-                            goToNextStep()
+                            showStep(currentStep + 1)
                         }
                     } else {
                         val errMsg = RetrofitClient.parseErrorMessage(response)
@@ -399,7 +447,6 @@ class OnboardingActivity : BaseActivity() {
     }
 
     private fun saveOnboardingStateAndExit(status: String) {
-        // Fetches profile name and metadata to update onboarding status only
         val name = existingProfile?.name ?: sessionManager.getUserName() ?: "Patient"
         val bloodGroup = existingProfile?.bloodGroup ?: selectedBloodGroup
         val dob = existingProfile?.dateOfBirth ?: ""
@@ -456,32 +503,36 @@ class OnboardingActivity : BaseActivity() {
             })
     }
 
-    private fun goToNextStep() {
-        currentStep++
-        
-        // Set all GONE first
-        stepBasic.visibility = View.GONE
-        stepMedical.visibility = View.GONE
-        stepEmergency.visibility = View.GONE
-        stepAddress.visibility = View.GONE
+    private fun showStep(step: Int) {
+        currentStep = step
+        stepBasic.visibility = if (step == 1) View.VISIBLE else View.GONE
+        stepMedical.visibility = if (step == 2) View.VISIBLE else View.GONE
+        stepEmergency.visibility = if (step == 3) View.VISIBLE else View.GONE
+        stepAddress.visibility = if (step == 4) View.VISIBLE else View.GONE
 
-        when (currentStep) {
+        when (step) {
+            1 -> {
+                progressSteps.progress = 25
+                txtStepIndicator.text = "STEP 1 OF 4"
+                txtStepTitle.text = "Basic Information"
+                btnSkip.text = "Skip Step"
+                btnNext.text = "Continue"
+            }
             2 -> {
-                stepMedical.visibility = View.VISIBLE
                 progressSteps.progress = 50
                 txtStepIndicator.text = "STEP 2 OF 4"
                 txtStepTitle.text = "Medical Details"
                 btnSkip.text = "Skip Step"
+                btnNext.text = "Continue"
             }
             3 -> {
-                stepEmergency.visibility = View.VISIBLE
                 progressSteps.progress = 75
                 txtStepIndicator.text = "STEP 3 OF 4"
                 txtStepTitle.text = "Emergency Contact"
                 btnSkip.text = "Skip Step"
+                btnNext.text = "Continue"
             }
             4 -> {
-                stepAddress.visibility = View.VISIBLE
                 progressSteps.progress = 100
                 txtStepIndicator.text = "STEP 4 OF 4"
                 txtStepTitle.text = "Home Address"
@@ -558,11 +609,6 @@ class OnboardingActivity : BaseActivity() {
             if (showError) inputPhone.error = "Enter a valid phone number for selected country"
             return false
         }
-        val formatted = PhoneNumberHelper.formatNationalNumber(phone, selectedUserCountry.code)
-        if (formatted != phone) {
-            inputPhone.setText(formatted)
-            inputPhone.setSelection(formatted.length)
-        }
         inputPhone.error = null
         return true
     }
@@ -582,11 +628,6 @@ class OnboardingActivity : BaseActivity() {
         if (!isValid) {
             if (showError) inputEmergPhone.error = "Enter a valid phone number for selected country"
             return false
-        }
-        val formatted = PhoneNumberHelper.formatNationalNumber(phone, selectedEmergCountry.code)
-        if (formatted != phone) {
-            inputEmergPhone.setText(formatted)
-            inputEmergPhone.setSelection(formatted.length)
         }
         inputEmergPhone.error = null
         return true

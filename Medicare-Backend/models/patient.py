@@ -185,45 +185,62 @@ class PatientModel:
         patients_col = get_patients_collection()
         now = datetime.now(timezone.utc)
         
+        existing = patients_col.find_one({"_id": ObjectId(user_id)}) or {}
+
         # Format/validate emergency contact parameters
         formatted_contacts = []
         if emergency_contacts:
             for c in emergency_contacts:
-                formatted_contacts.append({
-                    "name": c.get("name", "").strip(),
-                    "relationship": c.get("relationship", "").strip(),
-                    "phone": c.get("phone", "").strip(),
-                    "country_code": c.get("country_code", "").strip() if c.get("country_code") else "",
-                    "phone_national": c.get("phone_national", "").strip() if c.get("phone_national") else ""
-                })
-        
-        # Keep deprecated fields synchronized to prevent breaking older layouts
-        legacy_name = "Not Specified"
-        legacy_phone = "Not Specified"
-        if formatted_contacts:
-            legacy_name = formatted_contacts[0].get("name", "Not Specified")
-            legacy_phone = formatted_contacts[0].get("phone", "Not Specified")
-            
+                c_name = c.get("name", "").strip()
+                if c_name and c_name != "Not Specified":
+                    formatted_contacts.append({
+                        "name": c_name,
+                        "relationship": c.get("relationship", "Family").strip(),
+                        "phone": c.get("phone", "").strip(),
+                        "country_code": c.get("country_code", "").strip() if c.get("country_code") else "",
+                        "phone_national": c.get("phone_national", "").strip() if c.get("phone_national") else ""
+                    })
+
         update_fields = {
-            "name": name,
-            "blood_group": blood_group,
-            "emergency_contact_name": legacy_name,
-            "emergency_contact_phone": legacy_phone,
-            "emergency_contacts": formatted_contacts,
-            "date_of_birth": date_of_birth,
-            "age": age,
-            "gender": gender,
-            "phone": phone,
-            "phone_country_code": phone_country_code,
-            "phone_national": phone_national,
-            "address": address,
-            "medical_information": {
-                "allergies": medical_information.get("allergies", "").strip() if medical_information else "",
-                "conditions": medical_information.get("conditions", "").strip() if medical_information else "",
-                "medications": medical_information.get("medications", "").strip() if medical_information else ""
-            },
-            "onboarding_status": onboarding_status,
             "updated_at": now
+        }
+
+        if name:
+            update_fields["name"] = name
+        if blood_group and blood_group != "Not Specified":
+            update_fields["blood_group"] = blood_group
+        if date_of_birth:
+            update_fields["date_of_birth"] = date_of_birth
+        if age:
+            update_fields["age"] = str(age)
+        if gender:
+            update_fields["gender"] = gender
+        if phone:
+            update_fields["phone"] = phone
+        if phone_country_code:
+            update_fields["phone_country_code"] = phone_country_code
+        if phone_national:
+            update_fields["phone_national"] = phone_national
+        if address:
+            update_fields["address"] = address
+        if onboarding_status:
+            update_fields["onboarding_status"] = onboarding_status
+
+        # Keep contacts updated if provided, otherwise preserve existing
+        if formatted_contacts:
+            update_fields["emergency_contacts"] = formatted_contacts
+            update_fields["emergency_contact_name"] = formatted_contacts[0].get("name", "Not Specified")
+            update_fields["emergency_contact_phone"] = formatted_contacts[0].get("phone", "Not Specified")
+
+        # Merge medical information
+        existing_med = existing.get("medical_information", {}) or {}
+        allergies = (medical_information.get("allergies", "").strip() if medical_information else "") or existing_med.get("allergies", "")
+        conditions = (medical_information.get("conditions", "").strip() if medical_information else "") or existing_med.get("conditions", "")
+        medications = (medical_information.get("medications", "").strip() if medical_information else "") or existing_med.get("medications", "")
+        update_fields["medical_information"] = {
+            "allergies": allergies,
+            "conditions": conditions,
+            "medications": medications
         }
         
         # Merge accessibility settings if passed

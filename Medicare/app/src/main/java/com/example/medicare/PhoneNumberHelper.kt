@@ -53,11 +53,14 @@ object PhoneNumberHelper {
      */
     fun isValidNumber(nationalNumber: String, countryCode: String): Boolean {
         if (nationalNumber.isEmpty()) return false
+        val cleanDigits = nationalNumber.filter { it.isDigit() }
+        val country = getCountryByCode(countryCode)
+        if (cleanDigits.length != country.nationalDigits) return false
         return try {
             val proto: PhoneNumber = phoneUtil.parse(nationalNumber, countryCode)
-            phoneUtil.isValidNumberForRegion(proto, countryCode)
+            phoneUtil.isPossibleNumber(proto) || phoneUtil.isValidNumberForRegion(proto, countryCode)
         } catch (e: Exception) {
-            false
+            cleanDigits.length == country.nationalDigits
         }
     }
 
@@ -79,15 +82,17 @@ object PhoneNumberHelper {
      */
     fun getNormalizedNumber(nationalNumber: String, countryCode: String): String? {
         if (nationalNumber.isEmpty()) return null
+        val clean = nationalNumber.filter { it.isDigit() }
+        val country = getCountryByCode(countryCode)
         return try {
             val proto: PhoneNumber = phoneUtil.parse(nationalNumber, countryCode)
-            if (phoneUtil.isValidNumberForRegion(proto, countryCode)) {
+            if (phoneUtil.isPossibleNumber(proto) || phoneUtil.isValidNumberForRegion(proto, countryCode)) {
                 phoneUtil.format(proto, PhoneNumberUtil.PhoneNumberFormat.E164)
             } else {
-                null
+                "${country.callingCode}$clean"
             }
         } catch (e: Exception) {
-            null
+            "${country.callingCode}$clean"
         }
     }
 

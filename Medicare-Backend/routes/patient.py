@@ -62,30 +62,40 @@ def update_profile():
 
     # Backend phone number validation using python-phonenumbers library
     import phonenumbers
-    if phone:
+    default_region = phone_country_code if phone_country_code else "IN"
+    if phone and phone != "Not Specified":
         try:
             if phone.startswith("+"):
                 parsed = phonenumbers.parse(phone, None)
             else:
-                parsed = phonenumbers.parse(phone, "IN")
+                parsed = phonenumbers.parse(phone, default_region)
             if not phonenumbers.is_valid_number(parsed):
-                return jsonify({"success": False, "message": "Invalid phone number formatting"}), 400
+                digits = [ch for ch in phone if ch.isdigit()]
+                if len(digits) < 7 or len(digits) > 15:
+                    return jsonify({"success": False, "message": "Invalid phone number formatting"}), 400
         except Exception:
-            return jsonify({"success": False, "message": "Invalid phone number formatting"}), 400
+            digits = [ch for ch in phone if ch.isdigit()]
+            if len(digits) < 7 or len(digits) > 15:
+                return jsonify({"success": False, "message": "Invalid phone number formatting"}), 400
 
     if emergency_contacts:
         for c in emergency_contacts:
             c_phone = c.get("phone", "").strip()
+            c_region = c.get("country_code") or default_region
             if c_phone and c_phone != "Not Specified":
                 try:
                     if c_phone.startswith("+"):
                         parsed_c = phonenumbers.parse(c_phone, None)
                     else:
-                        parsed_c = phonenumbers.parse(c_phone, "IN")
+                        parsed_c = phonenumbers.parse(c_phone, c_region)
                     if not phonenumbers.is_valid_number(parsed_c):
-                        return jsonify({"success": False, "message": f"Invalid phone number formatting for emergency contact {c.get('name')}"}), 400
+                        c_digits = [ch for ch in c_phone if ch.isdigit()]
+                        if len(c_digits) < 7 or len(c_digits) > 15:
+                            return jsonify({"success": False, "message": f"Invalid phone number formatting for emergency contact {c.get('name')}"}), 400
                 except Exception:
-                    return jsonify({"success": False, "message": f"Invalid phone number formatting for emergency contact {c.get('name')}"}), 400
+                    c_digits = [ch for ch in c_phone if ch.isdigit()]
+                    if len(c_digits) < 7 or len(c_digits) > 15:
+                        return jsonify({"success": False, "message": f"Invalid phone number formatting for emergency contact {c.get('name')}"}), 400
 
     # Ensure status is valid
     if onboarding_status not in ("NOT_STARTED", "IN_PROGRESS", "SKIPPED", "COMPLETED"):
