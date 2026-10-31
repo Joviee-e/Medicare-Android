@@ -6,8 +6,11 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
+import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.medicare.api.BaseResponse
@@ -41,6 +44,38 @@ class AddMedicineActivity : BaseActivity() {
         setContentView(R.layout.activity_add_medicine)
 
         sessionManager = SessionManager(this)
+
+        // Setup custom bottom navigation
+        NavigationHelper.setupNavigation(this, R.id.tab_medicines)
+
+        // Top Header: Back button navigation
+        findViewById<ImageView>(R.id.btn_back)?.apply {
+            visibility = View.VISIBLE
+            setOnClickListener { finish() }
+        }
+
+        // Top Header: Notification bell trigger
+        findViewById<ImageView>(R.id.btn_notification)?.setOnClickListener {
+            NotificationHelper.show(this)
+        }
+
+        // Manage soft keyboard so bottom navigation does not get displaced
+        val addMedRootLayout = findViewById<View>(R.id.add_med_root_layout) ?: findViewById<View>(android.R.id.content)
+        val bottomNav = findViewById<View>(R.id.bottom_navigation)
+
+        ViewCompat.setOnApplyWindowInsetsListener(addMedRootLayout) { view, insets ->
+            val imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
+            val isKeyboardOpen = imeBottom > 0 || insets.isVisible(WindowInsetsCompat.Type.ime())
+
+            if (isKeyboardOpen && imeBottom > 0) {
+                bottomNav?.visibility = View.GONE
+                view.setPadding(0, 0, 0, imeBottom)
+            } else {
+                view.setPadding(0, 0, 0, 0)
+                bottomNav?.visibility = View.VISIBLE
+            }
+            insets
+        }
 
         val inputName = findViewById<EditText>(R.id.input_med_name)
         val inputDosage = findViewById<EditText>(R.id.input_dosage_value)
@@ -82,7 +117,7 @@ class AddMedicineActivity : BaseActivity() {
         val editDose = intent.getStringExtra("med_dose")
         
         if (medId != null) {
-            findViewById<TextView>(R.id.txt_title)?.text = "Edit Medicine"
+            findViewById<TextView>(R.id.txt_logo)?.text = "Edit Medicine"
             if (editName != null) {
                 inputName.setText(editName)
             }

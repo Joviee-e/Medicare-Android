@@ -56,40 +56,27 @@ class AIAssistantActivity : BaseActivity() {
             NotificationHelper.show(this)
         }
 
-        // Hide bottom navigation when keyboard is open to keep message composer directly above keyboard
-        val rootView = findViewById<View>(android.R.id.content)
+        // Adjust layout when keyboard opens to keep message composer directly above keyboard
+        val chatRootLayout = findViewById<View>(R.id.chat_root_layout) ?: findViewById<View>(android.R.id.content)
         val bottomNav = findViewById<View>(R.id.bottom_navigation)
 
-        ViewCompat.setOnApplyWindowInsetsListener(rootView) { _, insets ->
-            val imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
-            bottomNav.visibility = if (imeVisible) View.GONE else View.VISIBLE
-            if (imeVisible && chatData.isNotEmpty()) {
-                recyclerChat.post {
-                    recyclerChat.scrollToPosition(chatData.size - 1)
-                }
-            }
-            insets
-        }
+        ViewCompat.setOnApplyWindowInsetsListener(chatRootLayout) { view, insets ->
+            val imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
+            val isKeyboardOpen = imeBottom > 0 || insets.isVisible(WindowInsetsCompat.Type.ime())
 
-        rootView.viewTreeObserver.addOnGlobalLayoutListener {
-            val rect = android.graphics.Rect()
-            rootView.getWindowVisibleDisplayFrame(rect)
-            val screenHeight = rootView.rootView.height
-            val keypadHeight = screenHeight - rect.bottom
-            if (keypadHeight > screenHeight * 0.15) {
-                if (bottomNav.visibility != View.GONE) {
-                    bottomNav.visibility = View.GONE
-                    if (chatData.isNotEmpty()) {
-                        recyclerChat.post {
-                            recyclerChat.scrollToPosition(chatData.size - 1)
-                        }
+            if (isKeyboardOpen && imeBottom > 0) {
+                bottomNav?.visibility = View.GONE
+                view.setPadding(0, 0, 0, imeBottom)
+                if (chatData.isNotEmpty()) {
+                    recyclerChat.post {
+                        recyclerChat.scrollToPosition(chatData.size - 1)
                     }
                 }
             } else {
-                if (bottomNav.visibility != View.VISIBLE) {
-                    bottomNav.visibility = View.VISIBLE
-                }
+                view.setPadding(0, 0, 0, 0)
+                bottomNav?.visibility = View.VISIBLE
             }
+            insets
         }
 
         // Setup chat RecyclerView

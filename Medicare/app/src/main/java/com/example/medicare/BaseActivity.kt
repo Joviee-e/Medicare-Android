@@ -2,7 +2,10 @@ package com.example.medicare
 
 import android.content.Context
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 
 open class BaseActivity : AppCompatActivity() {
 
@@ -24,7 +27,20 @@ open class BaseActivity : AppCompatActivity() {
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
+        applyStatusBarInsets()
         AccessibilityHelper.applyHighContrast(this)
+    }
+
+    private fun applyStatusBarInsets() {
+        val spacer = findViewById<View>(R.id.status_bar_spacer) ?: return
+        ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets ->
+            val statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+            if (statusBarHeight > 0 && spacer.layoutParams.height != statusBarHeight) {
+                spacer.layoutParams.height = statusBarHeight
+                spacer.requestLayout()
+            }
+            insets
+        }
     }
 
     override fun onResume() {
@@ -40,6 +56,7 @@ open class BaseActivity : AppCompatActivity() {
             recreate()
             return
         }
+        applyStatusBarInsets()
         AccessibilityHelper.applyHighContrast(this)
     }
 }
