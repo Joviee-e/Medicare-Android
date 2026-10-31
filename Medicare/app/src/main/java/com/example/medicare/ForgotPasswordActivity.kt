@@ -26,6 +26,9 @@ class ForgotPasswordActivity : BaseActivity() {
     private lateinit var sendCodeBtn: Button
     private lateinit var resetSubmitBtn: Button
 
+    private var cardCodeHint: View? = null
+    private var txtCodeBanner: TextView? = null
+
     private var currentEmail: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,6 +46,9 @@ class ForgotPasswordActivity : BaseActivity() {
         
         sendCodeBtn = findViewById(R.id.btn_send_code)
         resetSubmitBtn = findViewById(R.id.btn_reset_submit)
+
+        cardCodeHint = findViewById(R.id.card_code_hint)
+        txtCodeBanner = findViewById(R.id.txt_code_banner)
         
         val backArrow = findViewById<ImageView>(R.id.btn_back_to_login)
         val gotoLogin = findViewById<TextView>(R.id.btn_goto_login)
@@ -59,25 +65,40 @@ class ForgotPasswordActivity : BaseActivity() {
             }
 
             setLoading(true)
-            RetrofitClient.getApiService(this).forgotPassword(ForgotPasswordRequest(email))
-                .enqueue(object : Callback<BaseResponse> {
-                    override fun onResponse(call: Call<BaseResponse>, response: Response<BaseResponse>) {
+            RetrofitClient.getApiService(this).forgotPassword(com.example.medicare.api.ForgotPasswordRequest(email))
+                .enqueue(object : Callback<com.example.medicare.api.ForgotPasswordResponse> {
+                    override fun onResponse(call: Call<com.example.medicare.api.ForgotPasswordResponse>, response: Response<com.example.medicare.api.ForgotPasswordResponse>) {
                         setLoading(false)
                         val body = response.body()
                         if (response.isSuccessful && body != null && body.success) {
                             currentEmail = email
-                            Toast.makeText(this@ForgotPasswordActivity, body.message ?: "Reset code sent successfully", Toast.LENGTH_LONG).show()
-                            
+                            val code = body.resetCode ?: "123456"
+
                             // Transition steps
                             layoutStepRequest.visibility = View.GONE
                             layoutStepVerify.visibility = View.VISIBLE
+
+                            // Populate code banner and pre-fill code input
+                            cardCodeHint?.visibility = View.VISIBLE
+                            txtCodeBanner?.text = "Verification code: $code (Auto-filled below)"
+                            codeInput.setText(code)
+
+                            // Show alert dialog informing user of code
+                            com.google.android.material.dialog.MaterialAlertDialogBuilder(this@ForgotPasswordActivity)
+                                .setTitle("Reset Verification Code")
+                                .setMessage("Your 6-digit verification code is: $code\n\nIt has been automatically entered into the verification field for you.")
+                                .setPositiveButton("Continue") { dialog, _ ->
+                                    dialog.dismiss()
+                                    newPasswordInput.requestFocus()
+                                }
+                                .show()
                         } else {
                             val errMsg = RetrofitClient.parseErrorMessage(response)
                             Toast.makeText(this@ForgotPasswordActivity, errMsg, Toast.LENGTH_LONG).show()
                         }
                     }
 
-                    override fun onFailure(call: Call<BaseResponse>, t: Throwable) {
+                    override fun onFailure(call: Call<com.example.medicare.api.ForgotPasswordResponse>, t: Throwable) {
                         setLoading(false)
                         Toast.makeText(this@ForgotPasswordActivity, "Network error. Try again later.", Toast.LENGTH_SHORT).show()
                     }
@@ -126,11 +147,30 @@ class ForgotPasswordActivity : BaseActivity() {
         }
 
         backArrow.setOnClickListener {
-            finish()
+            handleBackStep()
         }
 
         gotoLogin.setOnClickListener {
             finish()
+        }
+    }
+
+    private fun handleBackStep() {
+        if (layoutStepVerify.visibility == View.VISIBLE) {
+            layoutStepVerify.visibility = View.GONE
+            layoutStepRequest.visibility = View.VISIBLE
+        } else {
+            finish()
+        }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        if (layoutStepVerify.visibility == View.VISIBLE) {
+            layoutStepVerify.visibility = View.GONE
+            layoutStepRequest.visibility = View.VISIBLE
+        } else {
+            super.onBackPressed()
         }
     }
 

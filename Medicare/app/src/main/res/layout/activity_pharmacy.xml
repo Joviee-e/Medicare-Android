@@ -157,7 +157,8 @@
                     android:paddingEnd="16dp"
                     app:singleLine="true"
                     app:singleSelection="true"
-                    app:selectionRequired="true">
+                    app:selectionRequired="true"
+                    app:checkedChip="@+id/chip_pharmacy">
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chip_pharmacy"

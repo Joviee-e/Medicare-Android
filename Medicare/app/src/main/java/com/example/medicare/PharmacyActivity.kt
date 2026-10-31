@@ -22,6 +22,7 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.geometry.LatLng
@@ -287,39 +288,20 @@ class PharmacyActivity : BaseActivity() {
     }
 
     private fun setupCategoryChips() {
-        val chipPharmacy = findViewById<Chip>(R.id.chip_pharmacy)
-        val chipHospital = findViewById<Chip>(R.id.chip_hospital)
-        val chipClinic = findViewById<Chip>(R.id.chip_clinic)
-        val chipEmergency = findViewById<Chip>(R.id.chip_emergency)
-        val chipLab = findViewById<Chip>(R.id.chip_lab)
-        val chipDentist = findViewById<Chip>(R.id.chip_dentist)
+        val chipGroup = findViewById<ChipGroup>(R.id.chip_group_categories)
+        chipGroup.isSingleSelection = true
+        chipGroup.isSelectionRequired = true
 
-        val allChips = listOf(chipPharmacy, chipHospital, chipClinic, chipEmergency, chipLab, chipDentist)
-
-        fun selectChip(selected: Chip, category: String, name: String) {
-            allChips.forEach { chip ->
-                chip.isChecked = (chip == selected)
+        chipGroup.setOnCheckedStateChangeListener { _, checkedIds ->
+            val checkedId = checkedIds.firstOrNull() ?: return@setOnCheckedStateChangeListener
+            when (checkedId) {
+                R.id.chip_pharmacy -> setCategoryFilter("healthcare.pharmacy", "Pharmacies")
+                R.id.chip_hospital -> setCategoryFilter("healthcare.hospital", "Hospitals")
+                R.id.chip_clinic -> setCategoryFilter("healthcare.clinic_or_praxis", "Doctors & Clinics")
+                R.id.chip_emergency -> setCategoryFilter("emergency.ambulance_station,healthcare.hospital", "Emergencies")
+                R.id.chip_lab -> setCategoryFilter("healthcare.clinic_or_praxis.radiology,healthcare.clinic_or_praxis", "Laboratories")
+                R.id.chip_dentist -> setCategoryFilter("healthcare.dentist", "Dentists")
             }
-            setCategoryFilter(category, name)
-        }
-
-        chipPharmacy.setOnClickListener {
-            selectChip(chipPharmacy, "healthcare.pharmacy", "Pharmacies")
-        }
-        chipHospital.setOnClickListener {
-            selectChip(chipHospital, "healthcare.hospital", "Hospitals")
-        }
-        chipClinic.setOnClickListener {
-            selectChip(chipClinic, "healthcare.clinic_or_praxis", "Doctors & Clinics")
-        }
-        chipEmergency.setOnClickListener {
-            selectChip(chipEmergency, "emergency.ambulance_station,healthcare.hospital", "Emergencies")
-        }
-        chipLab.setOnClickListener {
-            selectChip(chipLab, "healthcare.clinic_or_praxis.radiology,healthcare.clinic_or_praxis", "Laboratories")
-        }
-        chipDentist.setOnClickListener {
-            selectChip(chipDentist, "healthcare.dentist", "Dentists")
         }
     }
 

@@ -129,16 +129,19 @@ class UserModel:
             pass
 
     @staticmethod
-    def set_reset_code(email: str, hashed_code: str, expires_at: datetime):
-        """Store hashed password reset code details."""
+    def set_reset_code(email: str, hashed_code: str, expires_at: datetime, raw_code: str = None):
+        """Store hashed and verification reset code details."""
         users_col = get_users_collection()
+        update_fields = {
+            "reset_code": hashed_code,
+            "reset_code_expires": expires_at,
+            "reset_attempts": 0
+        }
+        if raw_code:
+            update_fields["raw_reset_code"] = raw_code
         users_col.update_one(
             {"email": email},
-            {"$set": {
-                "reset_code": hashed_code,
-                "reset_code_expires": expires_at,
-                "reset_attempts": 0
-            }}
+            {"$set": update_fields}
         )
 
     @staticmethod
@@ -158,6 +161,7 @@ class UserModel:
             {"email": email},
             {"$set": {
                 "reset_code": None,
+                "raw_reset_code": None,
                 "reset_code_expires": None,
                 "reset_attempts": 0
             }}

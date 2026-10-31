@@ -15,7 +15,7 @@ interface ApiService {
     fun googleLogin(@Body request: GoogleLoginRequest): Call<AuthResponse>
 
     @POST("auth/forgot-password")
-    fun forgotPassword(@Body request: ForgotPasswordRequest): Call<BaseResponse>
+    fun forgotPassword(@Body request: ForgotPasswordRequest): Call<ForgotPasswordResponse>
 
     @POST("auth/reset-password")
     fun resetPassword(@Body request: ResetPasswordRequest): Call<BaseResponse>
