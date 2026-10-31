@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="MediCare+ Medication Adherence & Smart Healthcare Assistant Web Application. High-contrast, accessible daily dose tracking, drug safety verification, nearby pharmacy maps, and AI healthcare guidance.">
+  <title>MediCare+ | Accessible Smart Medication & Healthcare Companion</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="css/index.css">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300677f'><path d='M19 10.5h-5.5V5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v5.5H5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5h5.5V19c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-5.5H19c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5z'/></svg>">
+</head>
+
+<body>
+
+  <!-- Top Global Header -->
+  <header class="global-header" role="banner">
+    <div class="brand-wrapper">
+      <div class="brand-logo" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+          <path
+            d="M19 10.5h-5.5V5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v5.5H5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5h5.5V19c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-5.5H19c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5z" />
+        </svg>
+      </div>
+      <div class="brand-title">
+        MediCare<span>+</span>
+        <span class="brand-badge">Live Web App</span>
+      </div>
+    </div>
+
+    <div class="global-actions">
+      <!-- Viewport Mode Switcher (Mobile Mockup vs Desktop Portal) -->
+      <div class="view-mode-toggle" role="group" aria-label="Device Viewport Toggle">
+        <button id="btnViewMobile" class="view-toggle-btn active" title="Switch to Mobile Frame View">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <rect x="5" y="2" width="14" height="20" rx="3" ry="3"></rect>
+            <line x1="12" y1="18" x2="12.01" y2="18"></line>
+          </svg>
+          Mobile App
+        </button>
+        <button id="btnViewDesktop" class="view-toggle-btn" title="Expand to Desktop Clinical Dashboard">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+          </svg>
+          Desktop View
+        </button>
+      </div>
+
+      <!-- Quick Accessibility: Contrast -->
+      <button id="btnQuickContrast" class="quick-icon-btn" title="Toggle High Contrast Mode (WCAG AAA)"
+        aria-label="High Contrast Mode">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path
+            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18V4c4.41 0 8 3.59 8 8s-3.59 8-8 8z" />
+        </svg>
+      </button>
+
+      <!-- Quick Accessibility: Dark / Light Mode -->
+      <button id="btnQuickTheme" class="quick-icon-btn" title="Toggle Dark/Light Mode" aria-label="Dark Mode Toggle">
+        <svg id="themeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+
+      <!-- Simulate Dose Alarm -->
+      <button id="btnTriggerAlarm" class="quick-icon-btn" title="Trigger Dose Reminder Alarm Simulator"
+        aria-label="Test Alarm">
+        <span class="alarm-badge-pill" id="alarmCountBadge">1</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main App Shell -->
+  <main class="app-container" id="appMainContainer">
+    <div class="device-frame-wrapper" id="deviceFrame">
+      <div class="app-screen">
+
+        <!-- Mobile Dynamic Status Bar (Hidden in Desktop Mode) -->
+        <div class="phone-notch-bar" aria-hidden="true">
+          <span id="statusBarClock">08:45 AM</span>
+          <div class="phone-dynamic-island">
+            <span class="camera-sensor"></span>
+          </div>
+          <div class="phone-notch-icons">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 18.25c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l.71-.71C8.01 19.98 9.93 21 12 21c4.97 0 9-4.03 9-9s-4.03-9-9-9z" />
+            </svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M17 5v14H7V5h10m1-2H6c-.55 0-1 .45-1 1v16c0 .55.45 1 1 1h12c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1z" />
+            </svg>
+          </div>
+        </div>
+
+        <!-- Navigation (Desktop Sidebar or Mobile Bottom Nav) -->
+        <nav class="app-navigation" aria-label="Main Navigation">
+          <!-- Sidebar Profile Header (Visible only in Desktop mode) -->
+          <div class="sidebar-profile-card">
+            <div class="sidebar-avatar" id="sidebarAvatar">EV</div>
+            <div>
+              <div style="font-weight: 700; font-size: 0.95rem;" id="sidebarName">Eleanor Vance</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);" id="sidebarEmail">eleanor.vance@medicare.health
+              </div>
+            </div>
+          </div>
+
+          <button class="nav-item-btn active" data-tab="tabDashboard" id="navDashboard" aria-label="Dashboard">
+            <div class="nav-icon-container">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>
+            </div>
+            <span>Home</span>
+          </button>
+
+          <button class="nav-item-btn" data-tab="tabPrescriptions" id="navPrescriptions" aria-label="Prescriptions">
+            <div class="nav-icon-container">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+              </svg>
+            </div>
+            <span>Medicines</span>
+          </button>
+
+          <button class="nav-item-btn" data-tab="tabChatbot" id="navChatbot" aria-label="AI Health Assistant">
+            <div class="nav-icon-container">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
+            <span>AI Assistant</span>
+          </button>
+
+          <button class="nav-item-btn" data-tab="tabPharmacies" id="navPharmacies" aria-label="Pharmacies">
+            <div class="nav-icon-container">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+            </div>
+            <span>Pharmacies</span>
+          </button>
+
+          <button class="nav-item-btn" data-tab="tabProfile" id="navProfile" aria-label="Profile and Settings">
+            <div class="nav-icon-container">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+            <span>Profile</span>
+          </button>
+        </nav>
+
+        <!-- Scrollable Tab Content Container -->
+        <div class="screen-scroll-container">
+
+          <!-- TAB 1: DASHBOARD HOME -->
+          <section id="tabDashboard" class="screen-tab active-tab" aria-labelledby="dashHeading">
+            <div class="dashboard-header">
+              <div>
+                <h1 id="dashHeading" class="user-welcome-title">Good morning, Eleanor</h1>
+                <p class="user-welcome-sub" id="currentDateStr">Saturday, Oct 31 • Today's Schedule</p>
+              </div>
+              <button id="btnQuickAddMed" class="action-icon-circle" title="Add Medication" aria-label="Add Medication">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Adherence Progress Hero Card -->
+            <article class="adherence-hero-card">
+              <div class="hero-stats-info">
+                <span class="hero-pill-badge">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
+                  Daily Adherence
+                </span>
+                <h2 class="hero-main-title" id="adherenceHeroText">3 of 4 Doses Taken</h2>
+                <p class="hero-streak-text">🔥 5-Day Perfect Adherence Streak!</p>
+              </div>
+
+              <!-- Animated SVG Adherence Ring -->
+              <div class="adherence-ring-box">
+                <svg viewBox="0 0 36 36" class="circular-chart">
+                  <path class="circle-bg"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <path id="adherenceProgressPath" class="circle-progress" stroke-dasharray="75, 100"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+                <div class="ring-percent-text" id="adherencePercentText">75%</div>
+              </div>
+            </article>
+
+            <!-- Quick Action Tiles -->
+            <div class="quick-actions-grid" role="group" aria-label="Quick Actions">
+              <button class="action-tile-btn" id="qaAddMed">
+                <div class="action-icon-circle">➕</div>
+                <span class="action-tile-label">Add Med</span>
+              </button>
+              <button class="action-tile-btn" id="qaAskAi">
+                <div class="action-icon-circle">🤖</div>
+                <span class="action-tile-label">AI Advice</span>
+              </button>
+              <button class="action-tile-btn" id="qaPharmacies">
+                <div class="action-icon-circle">📍</div>
+                <span class="action-tile-label">Pharmacy</span>
+              </button>
+              <button class="action-tile-btn" id="qaAlarm">
+                <div class="action-icon-circle">⏰</div>
+                <span class="action-tile-label">Alarm</span>
+              </button>
+            </div>
+
+            <!-- Today's Schedule Timeline -->
+            <div class="section-heading-bar">
+              <h2 class="section-title">Today's Regimen</h2>
+              <span class="section-link" id="linkViewAllMeds">View All &rarr;</span>
+            </div>
+
+            <div class="timeline-feed" id="todayDoseFeed" role="region" aria-label="Today's Doses">
+              <!-- Dynamically Populated by app.js -->
+            </div>
+          </section>
+
+          <!-- TAB 2: PRESCRIPTIONS & MEDICINES LIST -->
+          <section id="tabPrescriptions" class="screen-tab" aria-labelledby="prescriptionsHeading">
+            <div class="section-heading-bar">
+              <h1 id="prescriptionsHeading" class="section-title">Prescriptions & Regimen</h1>
+              <button id="btnOpenAddMedModal" class="btn-primary-action" style="padding: 6px 16px; font-size: 0.85rem;">
+                + Add Medicine
+              </button>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="search-bar-box">
+              <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" id="searchMedicinesInput" class="search-input"
+                placeholder="Search by name, condition, or timing..." aria-label="Search Medications">
+            </div>
+
+            <!-- Filter Chips -->
+            <div class="filter-chips-row" role="tablist" aria-label="Medication Filters">
+              <button class="filter-chip active" data-filter="all">All (5)</button>
+              <button class="filter-chip" data-filter="morning">Morning</button>
+              <button class="filter-chip" data-filter="evening">Evening</button>
+              <button class="filter-chip" data-filter="as_needed">As Needed</button>
+            </div>
+
+            <!-- Full Medication Cards Feed -->
+            <div class="prescriptions-container" id="allMedicinesContainer" role="region" aria-label="Medications Feed">
+              <!-- Dynamically Populated by app.js -->
+            </div>
+          </section>
+
+          <!-- TAB 3: AI HEALTH ASSISTANT CHATBOT -->
+          <section id="tabChatbot" class="screen-tab" aria-labelledby="aiHeading">
+            <div class="section-heading-bar">
+              <h1 id="aiHeading" class="section-title">AI Medication Assistant</h1>
+              <span style="font-size: 0.78rem; color: var(--status-taken); font-weight: 600;">● Model Ready</span>
+            </div>
+
+            <div class="chat-screen-wrapper">
+              <div class="chat-header-bar">
+                <div class="chat-bot-identity">
+                  <div class="bot-avatar-badge">
+                    🤖
+                    <span class="online-dot"></span>
+                  </div>
+                  <div>
+                    <div style="font-weight: 700; font-size: 0.95rem;">MediCare+ Safety AI</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Verified Medical Guardrails Active
+                    </div>
+                  </div>
+                </div>
+                <button id="btnVoiceReadoutToggle" class="quick-icon-btn" title="Toggle Voice Audio Assistance"
+                  aria-label="Audio Readout">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Message Bubbles Feed -->
+              <div class="chat-feed-area" id="chatMessagesFeed" role="log" aria-live="polite">
+                <!-- Seed welcome message -->
+                <div class="chat-bubble bubble-bot">
+                  Hello Eleanor, I'm your MediCare+ assistant. I monitor your prescriptions (Metformin, Lisinopril,
+                  Atorvastatin, and Vitamin D3) and guard against drug interactions or missed doses. How can I help you
+                  today?
+                  <div class="chat-time-stamp">Just now</div>
+                </div>
+              </div>
+
+              <!-- Suggested Prompt Chips -->
+              <div class="chat-suggestions-box">
+                <button class="prompt-chip-btn" data-prompt="Can I take Metformin with meals?">Take Metformin with
+                  food?</button>
+                <button class="prompt-chip-btn" data-prompt="Explain common side effects of Lisinopril">Lisinopril
+                  precautions</button>
+                <button class="prompt-chip-btn" data-prompt="Check for interactions with my Penicillin allergy">Check
+                  allergy alerts</button>
+                <button class="prompt-chip-btn" data-prompt="What should I do if I missed a dose?">Missed a dose
+                  advice</button>
+              </div>
+
+              <!-- Chat Input Box -->
+              <form class="chat-input-row" id="chatMessageForm">
+                <input type="text" id="chatInputMessage" class="chat-input-field"
+                  placeholder="Ask about dosages, meal timings, or interactions..." required autocomplete="off"
+                  aria-label="Message to AI Assistant">
+                <button type="submit" class="chat-send-btn" id="btnSendChat" aria-label="Send Message">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
+                </button>
+              </form>
+            </div>
+          </section>
+
+          <!-- TAB 4: NEARBY PHARMACIES & MAP -->
+          <section id="tabPharmacies" class="screen-tab" aria-labelledby="pharmacyHeading">
+            <div class="section-heading-bar">
+              <h1 id="pharmacyHeading" class="section-title">Nearby Pharmacies</h1>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">Simulated Live Street Map</span>
+            </div>
+
+            <div class="pharmacy-layout-grid">
+              <!-- Interactive Street Map Canvas / SVG -->
+              <div class="map-container-box">
+                <svg class="simulated-map-svg" viewBox="0 0 100 100" id="pharmacyMapSvg"
+                  aria-label="Interactive Pharmacy Map">
+                  <!-- Street Grid Lines -->
+                  <line x1="0" y1="20" x2="100" y2="20" stroke="#cbd5e1" stroke-width="2" />
+                  <line x1="0" y1="50" x2="100" y2="50" stroke="#cbd5e1" stroke-width="3" />
+                  <line x1="0" y1="80" x2="100" y2="80" stroke="#cbd5e1" stroke-width="2" />
+                  <line x1="25" y1="0" x2="25" y2="100" stroke="#cbd5e1" stroke-width="2" />
+                  <line x1="60" y1="0" x2="60" y2="100" stroke="#cbd5e1" stroke-width="3" />
+                  <line x1="85" y1="0" x2="85" y2="100" stroke="#cbd5e1" stroke-width="2" />
+
+                  <!-- Park Green Zone -->
+                  <rect x="2" y="22" width="21" height="26" fill="#dcfce7" rx="2" />
+                  <text x="5" y="36" font-size="3" fill="#15803d" font-weight="bold">City Park</text>
+
+                  <!-- User Radar Location Pin -->
+                  <circle cx="50" cy="50" r="14" fill="rgba(0, 103, 127, 0.2)" class="map-user-pin" />
+                  <circle cx="50" cy="50" r="3.5" fill="#00677f" stroke="#ffffff" stroke-width="1.2" />
+                  <text x="44" y="58" font-size="3.2" fill="#004d60" font-weight="bold">You</text>
+
+                  <!-- Pharmacy Pins (Populated by app.js) -->
+                  <g id="mapPinsGroup"></g>
+                </svg>
+              </div>
+
+              <!-- Pharmacy Cards Feed -->
+              <div class="pharmacy-feed" id="pharmacyListFeed" role="region" aria-label="Pharmacies List">
+                <!-- Dynamically Populated by app.js -->
+              </div>
+            </div>
+          </section>
+
+          <!-- TAB 5: PROFILE & SENIOR ACCESSIBILITY -->
+          <section id="tabProfile" class="screen-tab" aria-labelledby="profileHeading">
+            <h1 id="profileHeading" class="section-title">Patient Profile & Accessibility</h1>
+
+            <!-- Patient Information Header Card -->
+            <article class="profile-card-header">
+              <div class="profile-avatar-large">EV</div>
+              <div class="profile-details-group">
+                <div class="profile-patient-name" id="profName">Eleanor Vance</div>
+                <div style="font-size: 0.85rem; color: var(--text-secondary);">Age 68 • Female • Blood Group O+</div>
+                <div class="profile-tags-row">
+                  <span class="dose-tag tag-taken">Type 2 Diabetes</span>
+                  <span class="dose-tag tag-scheduled">Hypertension</span>
+                  <span class="dose-tag tag-upcoming">Penicillin Allergy</span>
+                </div>
+              </div>
+            </article>
+
+            <!-- Accessibility Settings Card -->
+            <div class="settings-section-card">
+              <h2 style="font-size: 1.05rem; font-weight: 700;">Accessibility Suite (WCAG AAA)</h2>
+
+              <div class="settings-row-item">
+                <div>
+                  <div class="settings-label-text">Senior Large Text Mode</div>
+                  <div class="settings-desc-text">Increases font sizes to 120% for effortless legibility</div>
+                </div>
+                <label class="switch-control" aria-label="Senior Large Text">
+                  <input type="checkbox" id="toggleLargeFont">
+                  <span class="slider-round"></span>
+                </label>
+              </div>
+
+              <div class="settings-row-item">
+                <div>
+                  <div class="settings-label-text">High Contrast Mode</div>
+                  <div class="settings-desc-text">Deep borders and enhanced contrast ratios</div>
+                </div>
+                <label class="switch-control" aria-label="High Contrast Mode">
+                  <input type="checkbox" id="toggleHighContrast">
+                  <span class="slider-round"></span>
+                </label>
+              </div>
+
+              <div class="settings-row-item">
+                <div>
+                  <div class="settings-label-text">Dark / Night Theme</div>
+                  <div class="settings-desc-text">Reduces glare with low-light charcoal tones</div>
+                </div>
+                <label class="switch-control" aria-label="Dark Mode">
+                  <input type="checkbox" id="toggleDarkMode">
+                  <span class="slider-round"></span>
+                </label>
+              </div>
+
+              <div class="settings-row-item">
+                <div>
+                  <div class="settings-label-text">Audible Dose Reminders</div>
+                  <div class="settings-desc-text">Plays harmonic alarm chimes when doses are due</div>
+                </div>
+                <label class="switch-control" aria-label="Audible Reminders">
+                  <input type="checkbox" id="toggleAudioAlarms" checked>
+                  <span class="slider-round"></span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Emergency & Primary Care Info -->
+            <div class="settings-section-card">
+              <h2 style="font-size: 1.05rem; font-weight: 700;">Emergency Care & Doctor</h2>
+              <div style="font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary);">
+                <div><strong>Primary Physician:</strong> Dr. Robert Chen, MD</div>
+                <div><strong>Clinic:</strong> Metro Health Pavilion, Suite 402 • (555) 890-1234</div>
+                <div style="margin-top: 6px;"><strong>Emergency Contact:</strong> Sarah Vance (Daughter) • (555)
+                  234-5678</div>
+              </div>
+            </div>
+          </section>
+
+        </div> <!-- End screen-scroll-container -->
+
+      </div> <!-- End app-screen -->
+    </div> <!-- End device-frame-wrapper -->
+  </main>
+
+  <!-- MODAL: ADD / EDIT MEDICINE -->
+  <div class="modal-overlay" id="addMedicineModal" role="dialog" aria-modal="true" aria-labelledby="modalAddMedTitle">
+    <div class="modal-box">
+      <div class="modal-header-row">
+        <h2 class="modal-title" id="modalAddMedTitle">Add New Medication</h2>
+        <button class="modal-close-btn" id="btnCloseAddMedModal" aria-label="Close dialog">✕</button>
+      </div>
+
+      <form id="addMedicationForm" style="display: flex; flex-direction: column; gap: 14px;">
+        <div class="form-group">
+          <label class="form-label" for="medNameInput">Medication Name</label>
+          <input type="text" id="medNameInput" class="form-input" placeholder="e.g. Metformin, Lisinopril, Amoxicillin"
+            required>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label" for="medDosageInput">Dosage / Strength</label>
+            <input type="text" id="medDosageInput" class="form-input" placeholder="e.g. 500 mg, 10 ml" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="medFrequencySelect">Frequency</label>
+            <select id="medFrequencySelect" class="form-select">
+              <option value="daily">Daily</option>
+              <option value="twice_daily">Twice a Day</option>
+              <option value="weekly">Weekly</option>
+              <option value="as_needed">As Needed</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Form / Type</label>
+          <div class="type-selector-grid">
+            <button type="button" class="type-chip-btn selected" data-type="tablet">
+              <span style="font-size: 1.4rem;">💊</span>
+              <span>Tablet</span>
+            </button>
+            <button type="button" class="type-chip-btn" data-type="capsule">
+              <span style="font-size: 1.4rem;">💊</span>
+              <span>Capsule</span>
+            </button>
+            <button type="button" class="type-chip-btn" data-type="syrup">
+              <span style="font-size: 1.4rem;">🧪</span>
+              <span>Syrup</span>
+            </button>
+            <button type="button" class="type-chip-btn" data-type="injection">
+              <span style="font-size: 1.4rem;">💉</span>
+              <span>Injection</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label" for="medTimeInput">Reminder Time</label>
+            <input type="time" id="medTimeInput" class="form-input" value="08:00" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="medMealSelect">Meal Timing</label>
+            <select id="medMealSelect" class="form-select">
+              <option value="with_food">Take with Food</option>
+              <option value="after_food">After Meals</option>
+              <option value="before_food">Before Meals</option>
+              <option value="none">No Specific Food Requirement</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="medInstructionsInput">Special Precautions / Notes</label>
+          <input type="text" id="medInstructionsInput" class="form-input"
+            placeholder="e.g. Take with a full glass of water, avoid alcohol">
+        </div>
+
+        <!-- Live Drug Conflict / Allergy Check Feedback -->
+        <div id="safetyWarningBox"
+          style="display: none; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 0.85rem; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b;">
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 6px;">
+          <button type="button" id="btnCancelAddMed" class="btn-secondary-action" style="flex: 1;">Cancel</button>
+          <button type="submit" class="btn-primary-action" style="flex: 2;">Save Medication</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: DOSE REMINDER ALARM SIMULATOR -->
+  <div class="modal-overlay" id="alarmModalOverlay" role="dialog" aria-modal="true" aria-labelledby="alarmTitle">
+    <div class="modal-box alarm-modal-box">
+      <div class="alarm-pulsing-icon" aria-hidden="true">⏰</div>
+      <div>
+        <span class="hero-pill-badge"
+          style="background: var(--status-upcoming-bg); color: var(--status-upcoming-text);">Scheduled Dose Due</span>
+        <h2 id="alarmTitle" style="font-size: 1.5rem; font-weight: 700; margin-top: 6px;">Metformin • 500 mg</h2>
+        <p style="font-size: 0.92rem; color: var(--text-secondary); margin-top: 4px;" id="alarmInstructions">
+          Take 1 tablet with a full glass of water. Remember to have food nearby.
+        </p>
+      </div>
+
+      <div class="alarm-actions-col">
+        <button id="btnAlarmTakeNow" class="btn-primary-action" style="background: var(--status-taken);">
+          ✓ Mark as Taken
+        </button>
+        <button id="btnAlarmSnooze" class="btn-secondary-action" style="padding: 12px; font-weight: 600;">
+          ⏳ Snooze 10 Minutes
+        </button>
+        <button id="btnAlarmSkip" class="btn-danger-action" style="padding: 10px; font-weight: 600;">
+          ✕ Skip Dose
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+
+</html>
