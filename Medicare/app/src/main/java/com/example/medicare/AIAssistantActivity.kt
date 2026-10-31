@@ -1,10 +1,18 @@
 package com.example.medicare
 
+import android.net.Uri
 import android.os.Bundle
+import android.provider.OpenableColumns
+import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.cardview.widget.CardView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.medicare.api.ChatRequest
@@ -23,6 +31,18 @@ class AIAssistantActivity : BaseActivity() {
     private lateinit var adapter: ChatAdapter
     private lateinit var recyclerChat: RecyclerView
     private var pendingContextMap: MutableMap<String, String>? = null
+    private var selectedMediaUri: Uri? = null
+
+    private val pickMedia = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) {
+            selectedMediaUri = uri
+            findViewById<View>(R.id.layout_attachment_preview)?.visibility = View.VISIBLE
+            findViewById<ImageView>(R.id.img_attachment_thumb)?.setImageURI(uri)
+            val fileName = getFileName(uri) ?: "selected_image.jpg"
+            findViewById<TextView>(R.id.txt_attachment_name)?.text = fileName
+            Toast.makeText(this, "Media preview loaded", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,18 +51,44 @@ class AIAssistantActivity : BaseActivity() {
         // Setup custom bottom navigation
         NavigationHelper.setupNavigation(this, R.id.tab_ai)
 
-        // Hide bottom navigation when keyboard is open to prevent visual compression/misalignment
-        val rootView = findViewById<android.view.View>(android.R.id.content)
-        val bottomNav = findViewById<android.view.View>(R.id.bottom_navigation)
+        // Notification Bell trigger in standardized header
+        findViewById<ImageView>(R.id.btn_notification)?.setOnClickListener {
+            NotificationHelper.show(this)
+        }
+
+        // Hide bottom navigation when keyboard is open to keep message composer directly above keyboard
+        val rootView = findViewById<View>(android.R.id.content)
+        val bottomNav = findViewById<View>(R.id.bottom_navigation)
+
+        ViewCompat.setOnApplyWindowInsetsListener(rootView) { _, insets ->
+            val imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
+            bottomNav.visibility = if (imeVisible) View.GONE else View.VISIBLE
+            if (imeVisible && chatData.isNotEmpty()) {
+                recyclerChat.post {
+                    recyclerChat.scrollToPosition(chatData.size - 1)
+                }
+            }
+            insets
+        }
+
         rootView.viewTreeObserver.addOnGlobalLayoutListener {
             val rect = android.graphics.Rect()
             rootView.getWindowVisibleDisplayFrame(rect)
             val screenHeight = rootView.rootView.height
             val keypadHeight = screenHeight - rect.bottom
             if (keypadHeight > screenHeight * 0.15) {
-                bottomNav.visibility = android.view.View.GONE
+                if (bottomNav.visibility != View.GONE) {
+                    bottomNav.visibility = View.GONE
+                    if (chatData.isNotEmpty()) {
+                        recyclerChat.post {
+                            recyclerChat.scrollToPosition(chatData.size - 1)
+                        }
+                    }
+                }
             } else {
-                bottomNav.visibility = android.view.View.VISIBLE
+                if (bottomNav.visibility != View.VISIBLE) {
+                    bottomNav.visibility = View.VISIBLE
+                }
             }
         }
 
@@ -85,29 +131,38 @@ class AIAssistantActivity : BaseActivity() {
         }
         recyclerChat.adapter = adapter
 
-        // Send Button click action
-        val inputMessage = findViewById<EditText>(R.id.input_message)
-        findViewById<CardView>(R.id.btn_input_send)?.setOnClickListener {
-            val text = inputMessage.text.toString()
-            if (text.trim().isNotEmpty()) {
-                sendMessage(text)
-                inputMessage.setText("")
+        // Media attachment cancel button
+        val previewBar = findViewById<View>(R.id.layout_attachment_preview)
+        findViewById<ImageView>(R.id.btn_cancel_attachment)?.setOnClickListener {
+            selectedMediaUri = null
+            previewBar?.visibility = View.GONE
+        }
+
+        // Attachment media picker button
+        findViewById<ImageView>(R.id.btn_input_add)?.setOnClickListener {
+            try {
+                pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            } catch (e: Exception) {
+                Toast.makeText(this, "Could not open system media picker", Toast.LENGTH_SHORT).show()
             }
         }
 
-        // Voice Assistant
-        findViewById<CardView>(R.id.btn_input_mic)?.setOnClickListener {
-            Toast.makeText(this, "Voice assistant coming soon", Toast.LENGTH_SHORT).show()
-        }
-
-        // Plus attachment button
-        findViewById<ImageView>(R.id.btn_input_add)?.setOnClickListener {
-            Toast.makeText(this, "Attachment feature coming soon", Toast.LENGTH_SHORT).show()
-        }
-
-        // Chat settings overflow menu
-        findViewById<ImageView>(R.id.btn_menu_dots)?.setOnClickListener {
-            Toast.makeText(this, "Chat settings coming soon", Toast.LENGTH_SHORT).show()
+        // Send Button click action
+        val inputMessage = findViewById<EditText>(R.id.input_message)
+        findViewById<CardView>(R.id.btn_input_send)?.setOnClickListener {
+            if (selectedMediaUri != null) {
+                Toast.makeText(
+                    this,
+                    "Media analysis is not supported by the AI backend yet. Please ask text questions or cancel the photo attachment.",
+                    Toast.LENGTH_LONG
+                ).show()
+                return@setOnClickListener
+            }
+            val text = inputMessage.text.toString().trim()
+            if (text.isNotEmpty()) {
+                sendMessage(text)
+                inputMessage.setText("")
+            }
         }
 
         // If an explicit inquiry prompt or finding was passed, automatically dispatch the explanation inquiry
@@ -116,6 +171,22 @@ class AIAssistantActivity : BaseActivity() {
                 sendMessage(promptToSend)
             }
         }
+    }
+
+    private fun getFileName(uri: Uri): String? {
+        var name: String? = null
+        if (uri.scheme == "content") {
+            try {
+                contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (nameIndex != -1 && cursor.moveToFirst()) {
+                        name = cursor.getString(nameIndex)
+                    }
+                }
+            } catch (_: Exception) {
+            }
+        }
+        return name ?: uri.lastPathSegment
     }
 
     private fun sendMessage(text: String) {

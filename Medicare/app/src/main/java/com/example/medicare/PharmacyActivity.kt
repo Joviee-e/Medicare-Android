@@ -188,8 +188,9 @@ class PharmacyActivity : BaseActivity() {
         }
 
         // Back button navigation
-        findViewById<ImageView>(R.id.btn_back)?.setOnClickListener {
-            finish()
+        findViewById<ImageView>(R.id.btn_back)?.apply {
+            visibility = View.VISIBLE
+            setOnClickListener { finish() }
         }
     }
 

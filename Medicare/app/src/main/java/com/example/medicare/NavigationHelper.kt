@@ -14,6 +14,21 @@ object NavigationHelper {
         val tabAI = activity.findViewById<FrameLayout>(R.id.tab_ai)
         val tabProfile = activity.findViewById<FrameLayout>(R.id.tab_profile)
 
+        // Handle navigation bar & gesture insets safely
+        val bottomNav = activity.findViewById<View>(R.id.bottom_navigation)
+        if (bottomNav != null) {
+            androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(bottomNav) { view, insets ->
+                val navInsets = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars())
+                if (navInsets.bottom > 0) {
+                    val baseHeight = (72 * activity.resources.displayMetrics.density).toInt()
+                    view.layoutParams.height = baseHeight + navInsets.bottom
+                    view.setPadding(view.paddingLeft, view.paddingTop, view.paddingRight, navInsets.bottom)
+                    view.requestLayout()
+                }
+                insets
+            }
+        }
+
         val tabHomeActive = activity.findViewById<LinearLayout>(R.id.tab_home_active)
         val tabHomeInactive = activity.findViewById<LinearLayout>(R.id.tab_home_inactive)
         

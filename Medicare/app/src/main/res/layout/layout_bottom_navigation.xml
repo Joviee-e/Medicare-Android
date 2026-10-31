@@ -3,14 +3,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/bottom_nav_container"
     android:layout_width="match_parent"
-    android:layout_height="80dp"
+    android:layout_height="72dp"
     android:orientation="horizontal"
     android:background="@color/white"
     android:elevation="8dp"
     android:gravity="center_vertical"
-    android:paddingStart="8dp"
-    android:paddingEnd="8dp"
-    android:fitsSystemWindows="true">
+    android:paddingStart="4dp"
+    android:paddingEnd="4dp"
+    android:baselineAligned="false">
 
     <!-- Tab 1: Home -->
     <FrameLayout
@@ -27,20 +27,26 @@
             android:orientation="vertical"
             android:gravity="center"
             android:visibility="visible">
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_home"
-                app:tint="@color/text_secondary" />
+            <FrameLayout
+                android:layout_width="56dp"
+                android:layout_height="32dp">
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_gravity="center"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_home"
+                    app:tint="@color/text_secondary" />
+            </FrameLayout>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Home"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textColor="@color/text_secondary"
                 android:singleLine="true"
                 android:ellipsize="end"
-                android:layout_marginTop="4dp" />
+                android:layout_marginTop="2dp" />
         </LinearLayout>
         <LinearLayout
             android:id="@+id/tab_home_active"
@@ -50,7 +56,7 @@
             android:gravity="center"
             android:visibility="gone">
             <FrameLayout
-                android:layout_width="64dp"
+                android:layout_width="56dp"
                 android:layout_height="32dp"
                 android:background="@drawable/bg_capsule_active"
                 android:layout_gravity="center">
@@ -58,6 +64,7 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:layout_gravity="center"
+                    android:scaleType="centerInside"
                     android:src="@drawable/ic_home_filled"
                     app:tint="@color/white" />
             </FrameLayout>
@@ -65,10 +72,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Home"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textColor="@color/primary"
                 android:textStyle="bold"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="2dp"
                 android:singleLine="true"
                 android:ellipsize="end" />
         </LinearLayout>
@@ -89,20 +96,26 @@
             android:orientation="vertical"
             android:gravity="center"
             android:visibility="visible">
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_pill"
-                app:tint="@color/text_secondary" />
+            <FrameLayout
+                android:layout_width="56dp"
+                android:layout_height="32dp">
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_gravity="center"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_pill"
+                    app:tint="@color/text_secondary" />
+            </FrameLayout>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Medicines"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textColor="@color/text_secondary"
                 android:singleLine="true"
                 android:ellipsize="end"
-                android:layout_marginTop="4dp" />
+                android:layout_marginTop="2dp" />
         </LinearLayout>
         <LinearLayout
             android:id="@+id/tab_medicines_active"
@@ -112,7 +125,7 @@
             android:gravity="center"
             android:visibility="gone">
             <FrameLayout
-                android:layout_width="64dp"
+                android:layout_width="56dp"
                 android:layout_height="32dp"
                 android:background="@drawable/bg_capsule_active"
                 android:layout_gravity="center">
@@ -120,16 +133,17 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:layout_gravity="center"
+                    android:scaleType="centerInside"
                     android:src="@drawable/ic_pill_filled" />
             </FrameLayout>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Medicines"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textColor="@color/primary"
                 android:textStyle="bold"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="2dp"
                 android:singleLine="true"
                 android:ellipsize="end" />
         </LinearLayout>
@@ -150,20 +164,26 @@
             android:orientation="vertical"
             android:gravity="center"
             android:visibility="visible">
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_map_pin"
-                app:tint="@color/text_secondary" />
+            <FrameLayout
+                android:layout_width="56dp"
+                android:layout_height="32dp">
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_gravity="center"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_map_pin"
+                    app:tint="@color/text_secondary" />
+            </FrameLayout>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Pharmacy"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textColor="@color/text_secondary"
                 android:singleLine="true"
                 android:ellipsize="end"
-                android:layout_marginTop="4dp" />
+                android:layout_marginTop="2dp" />
         </LinearLayout>
         <LinearLayout
             android:id="@+id/tab_pharmacy_active"
@@ -173,7 +193,7 @@
             android:gravity="center"
             android:visibility="gone">
             <FrameLayout
-                android:layout_width="64dp"
+                android:layout_width="56dp"
                 android:layout_height="32dp"
                 android:background="@drawable/bg_capsule_active"
                 android:layout_gravity="center">
@@ -181,6 +201,7 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:layout_gravity="center"
+                    android:scaleType="centerInside"
                     android:src="@drawable/ic_map_pin_filled"
                     app:tint="@color/white" />
             </FrameLayout>
@@ -188,10 +209,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Pharmacy"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textColor="@color/primary"
                 android:textStyle="bold"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="2dp"
                 android:singleLine="true"
                 android:ellipsize="end" />
         </LinearLayout>
@@ -212,20 +233,26 @@
             android:orientation="vertical"
             android:gravity="center"
             android:visibility="visible">
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_robot"
-                app:tint="@color/text_secondary" />
+            <FrameLayout
+                android:layout_width="56dp"
+                android:layout_height="32dp">
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_gravity="center"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_robot"
+                    app:tint="@color/text_secondary" />
+            </FrameLayout>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="AI Assistant"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textColor="@color/text_secondary"
                 android:singleLine="true"
                 android:ellipsize="end"
-                android:layout_marginTop="4dp" />
+                android:layout_marginTop="2dp" />
         </LinearLayout>
         <LinearLayout
             android:id="@+id/tab_ai_active"
@@ -235,7 +262,7 @@
             android:gravity="center"
             android:visibility="gone">
             <FrameLayout
-                android:layout_width="64dp"
+                android:layout_width="56dp"
                 android:layout_height="32dp"
                 android:background="@drawable/bg_capsule_active"
                 android:layout_gravity="center">
@@ -243,16 +270,17 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:layout_gravity="center"
+                    android:scaleType="centerInside"
                     android:src="@drawable/ic_robot_filled" />
             </FrameLayout>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="AI Assistant"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textColor="@color/primary"
                 android:textStyle="bold"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="2dp"
                 android:singleLine="true"
                 android:ellipsize="end" />
         </LinearLayout>
@@ -273,20 +301,26 @@
             android:orientation="vertical"
             android:gravity="center"
             android:visibility="visible">
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_profile"
-                app:tint="@color/text_secondary" />
+            <FrameLayout
+                android:layout_width="56dp"
+                android:layout_height="32dp">
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_gravity="center"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_profile"
+                    app:tint="@color/text_secondary" />
+            </FrameLayout>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Profile"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textColor="@color/text_secondary"
                 android:singleLine="true"
                 android:ellipsize="end"
-                android:layout_marginTop="4dp" />
+                android:layout_marginTop="2dp" />
         </LinearLayout>
         <LinearLayout
             android:id="@+id/tab_profile_active"
@@ -296,7 +330,7 @@
             android:gravity="center"
             android:visibility="gone">
             <FrameLayout
-                android:layout_width="64dp"
+                android:layout_width="56dp"
                 android:layout_height="32dp"
                 android:background="@drawable/bg_capsule_active"
                 android:layout_gravity="center">
@@ -304,6 +338,7 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:layout_gravity="center"
+                    android:scaleType="centerInside"
                     android:src="@drawable/ic_profile_filled"
                     app:tint="@color/white" />
             </FrameLayout>
@@ -311,10 +346,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Profile"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textColor="@color/primary"
                 android:textStyle="bold"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="2dp"
                 android:singleLine="true"
                 android:ellipsize="end" />
         </LinearLayout>
