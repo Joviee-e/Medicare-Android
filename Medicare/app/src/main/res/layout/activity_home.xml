@@ -173,9 +173,10 @@
                         app:layout_constraintLeft_toLeftOf="parent"
                         app:layout_constraintTop_toTopOf="parent">
                         <ImageView
+                            android:id="@+id/img_upcoming_icon"
                             android:layout_width="24dp"
                             android:layout_height="24dp"
-                            android:src="@drawable/ic_pill"
+                            android:src="@drawable/tablets_solid_full"
                             android:layout_gravity="center"
                             android:scaleType="centerInside"
                             app:tint="@color/primary"/>

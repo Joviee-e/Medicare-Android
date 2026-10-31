@@ -5,5 +5,6 @@ data class ScheduleItem(
     val name: String,
     val dose: String,
     val time: String,
-    val status: String // "Taken", "Upcoming", "Missed"
+    val status: String, // "Taken", "Upcoming", "Missed"
+    val type: String = "tablet"
 )

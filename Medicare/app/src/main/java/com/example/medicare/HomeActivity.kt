@@ -184,7 +184,8 @@ class HomeActivity : BaseActivity() {
                             name = med.name,
                             dose = med.dosage,
                             time = time,
-                            status = status
+                            status = status,
+                            type = med.type
                         )
                     )
                 }
@@ -202,12 +203,21 @@ class HomeActivity : BaseActivity() {
 
         // Find Next Upcoming Dose
         val upcomingDose = scheduleList.find { it.status == "Upcoming" }
+        val imgUpcomingIcon = findViewById<ImageView>(R.id.img_upcoming_icon)
         if (upcomingDose != null) {
             cardUpcoming.visibility = View.VISIBLE
             txtUpcomingName.text = upcomingDose.name
             txtUpcomingDesc.text = upcomingDose.dose
             txtUpcomingTime.text = upcomingDose.time
             txtUpcomingCountdown.text = "Upcoming"
+
+            val iconRes = when (upcomingDose.type.lowercase()) {
+                "capsule" -> R.drawable.capsules_solid_full
+                "syrup" -> R.drawable.droplet_solid_full
+                "injection" -> R.drawable.syringe_solid_full
+                else -> R.drawable.tablets_solid_full
+            }
+            imgUpcomingIcon?.setImageResource(iconRes)
             
             val openAlarmAction = View.OnClickListener {
                 val intent = Intent(this, ReminderAlarmActivity::class.java).apply {
@@ -215,6 +225,7 @@ class HomeActivity : BaseActivity() {
                     putExtra("med_name", upcomingDose.name)
                     putExtra("med_dose", upcomingDose.dose)
                     putExtra("med_time", upcomingDose.time)
+                    putExtra("med_type", upcomingDose.type)
                 }
                 startActivity(intent)
             }
@@ -224,6 +235,7 @@ class HomeActivity : BaseActivity() {
             btnTakeNow.isEnabled = true
         } else {
             // Hide or set placeholder
+            imgUpcomingIcon?.setImageResource(R.drawable.tablets_solid_full)
             txtUpcomingName.text = "No upcoming doses"
             txtUpcomingDesc.text = "All scheduled doses completed"
             txtUpcomingTime.text = "--:--"

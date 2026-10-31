@@ -84,46 +84,59 @@ object NavigationHelper {
             }
         }
 
-        // Setup transitions
+        // Setup smooth tab switching transitions
         tabHome?.setOnClickListener {
             if (activeTabResId != R.id.tab_home) {
-                val intent = Intent(activity, HomeActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
-                activity.startActivity(intent)
-                if (activity !is HomeActivity) activity.finish()
+                navigateToTab(activity, HomeActivity::class.java)
             }
         }
         tabMedicines?.setOnClickListener {
             if (activeTabResId != R.id.tab_medicines) {
-                val intent = Intent(activity, MedicinesActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
-                activity.startActivity(intent)
-                if (activity !is HomeActivity) activity.finish()
+                navigateToTab(activity, MedicinesActivity::class.java)
             }
         }
         tabPharmacy?.setOnClickListener {
             if (activeTabResId != R.id.tab_pharmacy) {
-                val intent = Intent(activity, PharmacyActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
-                activity.startActivity(intent)
-                if (activity !is HomeActivity) activity.finish()
+                navigateToTab(activity, PharmacyActivity::class.java)
             }
         }
         tabAI?.setOnClickListener {
             if (activeTabResId != R.id.tab_ai) {
-                val intent = Intent(activity, AIAssistantActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
-                activity.startActivity(intent)
-                if (activity !is HomeActivity) activity.finish()
+                navigateToTab(activity, AIAssistantActivity::class.java)
             }
         }
         tabProfile?.setOnClickListener {
             if (activeTabResId != R.id.tab_profile) {
-                val intent = Intent(activity, ProfileActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
-                activity.startActivity(intent)
-                if (activity !is HomeActivity) activity.finish()
+                navigateToTab(activity, ProfileActivity::class.java)
             }
+        }
+    }
+
+    private fun navigateToTab(activity: Activity, targetClass: Class<*>) {
+        val intent = Intent(activity, targetClass)
+        intent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+        activity.startActivity(intent)
+
+        if (android.os.Build.VERSION.SDK_INT >= 34) {
+            activity.overrideActivityTransition(
+                Activity.OVERRIDE_TRANSITION_OPEN,
+                android.R.anim.fade_in,
+                android.R.anim.fade_out
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            activity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+        }
+
+        // Finish sub-screens so user doesn't get stuck in nested forms
+        val isRootTab = activity is HomeActivity ||
+                activity is MedicinesActivity ||
+                activity is PharmacyActivity ||
+                activity is AIAssistantActivity ||
+                activity is ProfileActivity
+
+        if (!isRootTab) {
+            activity.finish()
         }
     }
 }

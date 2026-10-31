@@ -149,13 +149,15 @@
                 android:fillViewport="true"
                 app:layout_constraintTop_toBottomOf="@id/layout_map_container">
 
-                <LinearLayout
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chip_group_categories"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
                     android:paddingStart="16dp"
                     android:paddingEnd="16dp"
-                    android:gravity="center_vertical">
+                    app:singleLine="true"
+                    app:singleSelection="true"
+                    app:selectionRequired="true">
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chip_pharmacy"
@@ -235,7 +237,7 @@
                         app:chipStrokeWidth="1.5dp"
                         app:rippleColor="@color/secondary_container"/>
 
-                </LinearLayout>
+                </com.google.android.material.chip.ChipGroup>
             </HorizontalScrollView>
 
             <!-- List Title Header -->

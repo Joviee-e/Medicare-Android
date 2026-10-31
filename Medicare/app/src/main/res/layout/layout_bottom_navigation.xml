@@ -178,7 +178,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Pharmacy"
+                android:text="Map"
                 android:textSize="11sp"
                 android:textColor="@color/text_secondary"
                 android:singleLine="true"
@@ -208,7 +208,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Pharmacy"
+                android:text="Map"
                 android:textSize="11sp"
                 android:textColor="@color/primary"
                 android:textStyle="bold"

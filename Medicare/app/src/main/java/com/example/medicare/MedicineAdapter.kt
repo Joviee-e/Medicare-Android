@@ -44,6 +44,16 @@ class MedicineAdapter(private val items: MutableList<MedicineItem>) :
 
         val context = holder.itemView.context
 
+        // Bind medicine type icon
+        val med = MedicineCache.getMedicines().find { it.id == item.id }
+        val iconRes = when (med?.type?.lowercase()) {
+            "capsule" -> R.drawable.capsules_solid_full
+            "syrup" -> R.drawable.droplet_solid_full
+            "injection" -> R.drawable.syringe_solid_full
+            else -> R.drawable.tablets_solid_full
+        }
+        holder.imgMedIcon.setImageResource(iconRes)
+
         // Default alpha
         holder.txtName.alpha = 1.0f
         holder.txtDose.alpha = 1.0f

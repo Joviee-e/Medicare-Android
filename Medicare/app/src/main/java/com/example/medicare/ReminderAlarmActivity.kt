@@ -52,6 +52,22 @@ class ReminderAlarmActivity : BaseActivity() {
         txtName.text = medName
         txtDose.text = medDose
 
+        // Bind medicine icon based on selected type
+        val imgIcon = findViewById<android.widget.ImageView>(R.id.img_alarm_med_icon)
+        var medType = intent.getStringExtra("med_type")
+        if (medType.isNullOrEmpty() && medId.isNotEmpty()) {
+            MedicineCache.loadFromPrefs(this)
+            medType = MedicineCache.getMedicines().find { it.id == medId }?.type
+        }
+
+        val iconRes = when (medType?.lowercase()) {
+            "capsule" -> R.drawable.capsules_solid_full
+            "syrup" -> R.drawable.droplet_solid_full
+            "injection" -> R.drawable.syringe_solid_full
+            else -> R.drawable.tablets_solid_full
+        }
+        imgIcon?.setImageResource(iconRes)
+
         // 1. Voice Reminders (Text to Speech)
         val isVoiceEnabled = sessionManager.isVoiceRemindersEnabled()
         if (isVoiceEnabled) {

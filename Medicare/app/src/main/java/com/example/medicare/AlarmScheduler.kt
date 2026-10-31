@@ -120,6 +120,7 @@ object AlarmScheduler {
                     putExtra("med_frequency", medicine.frequency)
                     putExtra("med_end_date", medicine.endDate)
                     putExtra("med_index", index)
+                    putExtra("med_type", medicine.type)
                 }
 
                 val requestCode = getRequestCode(medicine.id, index)
@@ -167,7 +168,8 @@ object AlarmScheduler {
         timeStr: String,
         frequency: String,
         endDateStr: String,
-        index: Int
+        index: Int,
+        type: String = "tablet"
     ) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
         
@@ -219,6 +221,7 @@ object AlarmScheduler {
                 putExtra("med_frequency", frequency)
                 putExtra("med_end_date", endDateStr)
                 putExtra("med_index", index)
+                putExtra("med_type", type)
             }
 
             val requestCode = getRequestCode(medicineId, index)

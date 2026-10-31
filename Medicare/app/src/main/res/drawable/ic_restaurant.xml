@@ -3,11 +3,12 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-  <path
-      android:fillColor="#00000000"
-      android:strokeColor="#8E9192"
-      android:strokeWidth="2"
-      android:strokeLineCap="round"
-      android:strokeLineJoin="round"
-      android:pathData="M17,3v12M17,15v7M21,3v6 M11,3v5a3,3 0,0 1,-6 0V3M8,8v14"/>
+    <!-- Fork -->
+    <path
+        android:fillColor="#FF8E9192"
+        android:pathData="M11,9H9V2H7v7H5V2H3v7c0,2.12 1.66,3.84 3.75,3.97V22h2.5v-9.03C11.34,12.84 13,11.12 13,9V2h-2V9z"/>
+    <!-- Spoon -->
+    <path
+        android:fillColor="#FF8E9192"
+        android:pathData="M18,2c-2.42,0 -4,1.92 -4,4.28 0,1.74 1.04,3.23 2.5,3.87V22h3V10.15c1.46,-0.64 2.5,-2.13 2.5,-3.87C22,3.92 20.42,2 18,2z"/>
 </vector>

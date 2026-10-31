@@ -19,6 +19,7 @@ class AlarmReceiver : BroadcastReceiver() {
         val frequency = intent.getStringExtra("med_frequency") ?: "daily"
         val endDateStr = intent.getStringExtra("med_end_date") ?: ""
         val index = intent.getIntExtra("med_index", 0)
+        val medType = intent.getStringExtra("med_type") ?: "tablet"
 
         Log.d("AlarmReceiver", "Medication alarm triggered: $medName ($medDose)")
 
@@ -28,6 +29,7 @@ class AlarmReceiver : BroadcastReceiver() {
             putExtra("med_name", medName)
             putExtra("med_dose", medDose)
             putExtra("med_time", medTime)
+            putExtra("med_type", medType)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
 
@@ -91,7 +93,8 @@ class AlarmReceiver : BroadcastReceiver() {
             timeStr = medTime,
             frequency = frequency,
             endDateStr = endDateStr,
-            index = index
+            index = index,
+            type = medType
         )
     }
 }

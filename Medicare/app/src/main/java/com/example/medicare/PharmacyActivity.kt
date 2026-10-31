@@ -187,11 +187,8 @@ class PharmacyActivity : BaseActivity() {
             NotificationHelper.show(this)
         }
 
-        // Back button navigation
-        findViewById<ImageView>(R.id.btn_back)?.apply {
-            visibility = View.VISIBLE
-            setOnClickListener { finish() }
-        }
+        // Back button is hidden for primary root navigation tabs
+        findViewById<ImageView>(R.id.btn_back)?.visibility = View.GONE
     }
 
     private fun enableLocationComponent(loadedMapStyle: Style) {
@@ -290,23 +287,39 @@ class PharmacyActivity : BaseActivity() {
     }
 
     private fun setupCategoryChips() {
-        findViewById<Chip>(R.id.chip_pharmacy).setOnClickListener {
-            setCategoryFilter("healthcare.pharmacy", "Pharmacies")
+        val chipPharmacy = findViewById<Chip>(R.id.chip_pharmacy)
+        val chipHospital = findViewById<Chip>(R.id.chip_hospital)
+        val chipClinic = findViewById<Chip>(R.id.chip_clinic)
+        val chipEmergency = findViewById<Chip>(R.id.chip_emergency)
+        val chipLab = findViewById<Chip>(R.id.chip_lab)
+        val chipDentist = findViewById<Chip>(R.id.chip_dentist)
+
+        val allChips = listOf(chipPharmacy, chipHospital, chipClinic, chipEmergency, chipLab, chipDentist)
+
+        fun selectChip(selected: Chip, category: String, name: String) {
+            allChips.forEach { chip ->
+                chip.isChecked = (chip == selected)
+            }
+            setCategoryFilter(category, name)
         }
-        findViewById<Chip>(R.id.chip_hospital).setOnClickListener {
-            setCategoryFilter("healthcare.hospital", "Hospitals")
+
+        chipPharmacy.setOnClickListener {
+            selectChip(chipPharmacy, "healthcare.pharmacy", "Pharmacies")
         }
-        findViewById<Chip>(R.id.chip_clinic).setOnClickListener {
-            setCategoryFilter("healthcare.clinic_or_praxis", "Doctors & Clinics")
+        chipHospital.setOnClickListener {
+            selectChip(chipHospital, "healthcare.hospital", "Hospitals")
         }
-        findViewById<Chip>(R.id.chip_emergency).setOnClickListener {
-            setCategoryFilter("emergency.ambulance_station,healthcare.hospital", "Emergencies")
+        chipClinic.setOnClickListener {
+            selectChip(chipClinic, "healthcare.clinic_or_praxis", "Doctors & Clinics")
         }
-        findViewById<Chip>(R.id.chip_lab).setOnClickListener {
-            setCategoryFilter("healthcare.clinic_or_praxis.radiology,healthcare.clinic_or_praxis", "Laboratories")
+        chipEmergency.setOnClickListener {
+            selectChip(chipEmergency, "emergency.ambulance_station,healthcare.hospital", "Emergencies")
         }
-        findViewById<Chip>(R.id.chip_dentist).setOnClickListener {
-            setCategoryFilter("healthcare.dentist", "Dentists")
+        chipLab.setOnClickListener {
+            selectChip(chipLab, "healthcare.clinic_or_praxis.radiology,healthcare.clinic_or_praxis", "Laboratories")
+        }
+        chipDentist.setOnClickListener {
+            selectChip(chipDentist, "healthcare.dentist", "Dentists")
         }
     }
 

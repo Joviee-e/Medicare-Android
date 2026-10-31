@@ -64,6 +64,7 @@ class ScheduleAdapter(private val items: List<ScheduleItem>) :
                 putExtra("med_name", item.name)
                 putExtra("med_dose", item.dose)
                 putExtra("med_time", item.time)
+                putExtra("med_type", item.type)
             }
             context.startActivity(intent)
         }
