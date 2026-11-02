@@ -2,10 +2,13 @@ import re
 from datetime import datetime
 
 def is_valid_email(email: str) -> bool:
-    """Validate email using a standard regular expression pattern."""
-    if not email:
+    """Validate email using strict standard constraints."""
+    if not email or not isinstance(email, str):
         return False
-    pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+    email = email.strip()
+    if '..' in email or len(email) > 254:
+        return False
+    pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$'
     return bool(re.match(pattern, email))
 
 def is_valid_password(password: str) -> bool:

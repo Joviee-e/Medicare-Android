@@ -93,7 +93,8 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
                                 android:src="@drawable/ic_profile_filled"
-                                android:scaleType="centerCrop"
+                                android:scaleType="centerInside"
+                                android:padding="20dp"
                                 android:tint="@color/on_secondary_container"
                                 android:background="@color/secondary_container"/>
                         </androidx.cardview.widget.CardView>

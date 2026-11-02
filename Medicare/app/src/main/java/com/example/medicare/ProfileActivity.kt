@@ -113,7 +113,27 @@ class ProfileActivity : BaseActivity() {
 
         // Profile pic overlay triggers PickVisualMedia
         findViewById<View>(R.id.photo_container)?.setOnClickListener {
-            pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            if (ProfileImageManager.hasCustomProfilePicture(this)) {
+                AlertDialog.Builder(this)
+                    .setTitle("Profile Photo")
+                    .setItems(arrayOf("Change Photo", "Remove Photo")) { _, which ->
+                        when (which) {
+                            0 -> pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            1 -> {
+                                ProfileImageManager.deleteProfilePicture(this)
+                                val imgView: ImageView? = findViewById(R.id.img_profile_picture)
+                                if (imgView != null) {
+                                    ProfileImageManager.loadDefaultAvatar(this, imgView)
+                                }
+                                Toast.makeText(this, "Profile picture removed", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            } else {
+                pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
         }
 
         // Reminder sounds switch UI and row click

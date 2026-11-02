@@ -57,10 +57,14 @@ class ForgotPasswordActivity : BaseActivity() {
             val email = emailInput.text.toString().trim()
             if (email.isEmpty()) {
                 emailInput.error = "Email address is required"
+                emailInput.requestFocus()
+                Toast.makeText(this, "Email address is required", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                emailInput.error = "Please enter a valid email address"
+            if (!EmailValidator.isValid(email)) {
+                emailInput.error = "Please enter a valid email address (e.g. name@example.com)"
+                emailInput.requestFocus()
+                Toast.makeText(this, "Please enter a valid email address (e.g. name@example.com)", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 

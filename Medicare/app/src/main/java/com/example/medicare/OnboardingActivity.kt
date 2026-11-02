@@ -67,7 +67,20 @@ class OnboardingActivity : BaseActivity() {
     private lateinit var btnSkipAll: TextView
 
     private val bloodGroups = arrayOf("O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-")
-    private val relationships = arrayOf("Family", "Spouse", "Parent", "Child", "Friend", "Other")
+    private val relationships = arrayOf(
+        "Father / Dad",
+        "Mother / Mom",
+        "Spouse / Partner",
+        "Son",
+        "Daughter",
+        "Brother",
+        "Sister",
+        "Parent",
+        "Family Member",
+        "Guardian / Caregiver",
+        "Friend",
+        "Other"
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -136,7 +149,10 @@ class OnboardingActivity : BaseActivity() {
 
         // Setup Spinners and Chips
         setupBloodGroupChips()
-        spinnerEmergRel.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, relationships)
+        val relAdapter = ArrayAdapter(this, R.layout.item_spinner_selected, relationships).apply {
+            setDropDownViewResource(R.layout.item_spinner_dropdown)
+        }
+        spinnerEmergRel.adapter = relAdapter
 
         // Setup DOB Picker dialog trigger
         inputDob.setOnClickListener {
@@ -275,7 +291,8 @@ class OnboardingActivity : BaseActivity() {
             }
             inputEmergPhone.setText(emergDigits)
             
-            val relIdx = relationships.indexOf(primaryContact?.relationship ?: "Family")
+            val primaryRel = primaryContact?.relationship ?: "Father / Dad"
+            val relIdx = relationships.indexOfFirst { it.equals(primaryRel, ignoreCase = true) || it.contains(primaryRel, ignoreCase = true) }
             if (relIdx >= 0) spinnerEmergRel.setSelection(relIdx)
 
             inputAddress.setText(profile.address ?: "")

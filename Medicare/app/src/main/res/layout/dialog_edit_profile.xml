@@ -309,7 +309,10 @@
             android:paddingStart="12dp"
             android:paddingEnd="12dp"
             android:textSize="15sp"
-            android:hint="e.g. Spouse, Parent, Friend"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold"
+            android:textColorHint="@color/neutral_gray"
+            android:hint="e.g. Father, Mother, Spouse, Friend"
             android:maxLines="1" />
 
         <!-- Emergency Contact Phone Field -->
