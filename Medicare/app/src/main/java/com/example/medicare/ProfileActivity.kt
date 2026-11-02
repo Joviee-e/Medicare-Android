@@ -1,4 +1,4 @@
-package com.example.medicare
+﻿package com.example.medicare
 
 import android.app.DatePickerDialog
 import android.content.Intent
@@ -32,7 +32,6 @@ class ProfileActivity : BaseActivity() {
     private lateinit var progressCompletion: ProgressBar
 
     private lateinit var switchContrast: SwitchCompat
-    private lateinit var switchVoice: SwitchCompat
     private lateinit var switchHaptic: SwitchCompat
     private lateinit var seekbarFont: SeekBar
 
@@ -70,7 +69,6 @@ class ProfileActivity : BaseActivity() {
         progressCompletion = findViewById(R.id.progress_completion)
 
         switchContrast = findViewById(R.id.switch_contrast)
-        switchVoice = findViewById(R.id.switch_voice)
         switchHaptic = findViewById(R.id.switch_haptic)
         seekbarFont = findViewById(R.id.seekbar_font_size)
 
@@ -144,9 +142,6 @@ class ProfileActivity : BaseActivity() {
         }
         findViewById<View>(R.id.row_contrast)?.setOnClickListener {
             switchContrast.toggle()
-        }
-        findViewById<View>(R.id.row_voice)?.setOnClickListener {
-            switchVoice.toggle()
         }
         findViewById<View>(R.id.row_reminder_sounds)?.setOnClickListener {
             switchSounds?.toggle()
@@ -222,7 +217,6 @@ class ProfileActivity : BaseActivity() {
 
                         isBindingData = true
                         switchContrast.isChecked = sessionManager.isContrastMode()
-                        switchVoice.isChecked = sessionManager.isVoiceRemindersEnabled()
                         switchHaptic.isChecked = sessionManager.isHapticFeedbackEnabled()
                         seekbarFont.progress = sessionManager.getFontSize()
                         isBindingData = false
@@ -445,7 +439,7 @@ class ProfileActivity : BaseActivity() {
 
             val settings = AccessibilitySettings(
                 contrastMode = switchContrast.isChecked,
-                voiceInput = switchVoice.isChecked,
+                voiceInput = false,
                 hapticFeedback = switchHaptic.isChecked,
                 fontSize = seekbarFont.progress
             )
@@ -517,13 +511,6 @@ class ProfileActivity : BaseActivity() {
                 switchContrast.postDelayed({
                     recreate()
                 }, 280)
-            }
-        }
-        
-        switchVoice.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked != sessionManager.isVoiceRemindersEnabled()) {
-                sessionManager.setVoiceRemindersEnabled(isChecked)
-                syncAccessibilitySettingsToBackend()
             }
         }
         
