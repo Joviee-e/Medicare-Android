@@ -78,6 +78,11 @@ class HomeActivity : BaseActivity() {
         }
 
         // View All click -> starts MedicinesActivity
+        findViewById<View>(R.id.card_predictive_intelligence)?.setOnClickListener {
+            val intent = Intent(this, InsightsActivity::class.java)
+            startActivity(intent)
+        }
+
         findViewById<TextView>(R.id.btn_view_all)?.setOnClickListener {
             val intent = Intent(this, MedicinesActivity::class.java)
             startActivity(intent)

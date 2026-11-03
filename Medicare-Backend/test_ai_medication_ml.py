@@ -108,6 +108,8 @@ class AIMedicationMLTestCase(unittest.TestCase):
 
     def test_ml_prediction_high_risk(self):
         """Verify high/medium adherence risk for complex schedule with missed doses."""
+        from datetime import datetime, timezone, timedelta
+        today = datetime.now(timezone.utc)
         meds = [
             {
                 "name": f"Drug_{i}",
@@ -116,11 +118,8 @@ class AIMedicationMLTestCase(unittest.TestCase):
                 "frequency": "daily",
                 "reminder_times": ["08:00 AM", "08:00 PM"],
                 "logs": [
-                    {"date": "2026-09-24", "status": "missed"},
-                    {"date": "2026-09-23", "status": "missed"},
-                    {"date": "2026-09-22", "status": "missed"},
-                    {"date": "2026-09-21", "status": "missed"},
-                    {"date": "2026-09-20", "status": "missed"}
+                    {"date": (today - timedelta(days=d)).strftime("%Y-%m-%d"), "status": "missed"}
+                    for d in range(1, 6)
                 ]
             }
             for i in range(5)

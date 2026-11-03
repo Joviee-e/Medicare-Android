@@ -79,8 +79,8 @@ def create_medicine():
         guidance = []
 
         try:
-            # 1. Normalize with RxNorm and fetch openFDA label
-            med_info = get_medication_info(name)
+            # 1. Normalize with RxNorm and fetch openFDA label (Gemini fallback if not found)
+            med_info = get_medication_info(name, dosage=dosage)
 
             # 2. Check Patient Allergies (Deterministic, High Priority)
             profile = PatientModel.get_profile(patient_id)
@@ -122,16 +122,23 @@ def create_medicine():
             # 4. Extract Verified Administration Guidance and Precautions
             guidance = extract_medication_guidance(med_info)
             if guidance and not allergy_alert:
-                primary_guidance = guidance[0]
+                summary_lines = []
+                for g in guidance:
+                    cat = g.get("category")
+                    msg = g.get("message", "")
+                    if cat in ("common_use", "administration", "self_care", "dosage", "precaution") and msg:
+                        summary_lines.append(f"• {msg}")
+                notif_message = "\n".join(summary_lines[:3]) if summary_lines else guidance[0]["message"]
+
                 NotificationModel.create_notification(
                     patient_id=patient_id,
                     title=f"Medication Guidance: {name}",
-                    message=primary_guidance["message"],
+                    message=notif_message,
                     priority="low",
                     notif_type="guidance",
                     medicine_id=med_id,
                     medicine_name=name,
-                    context_for_ai=f"Administration guidance for {name}: {primary_guidance['message']}"
+                    context_for_ai=f"Administration guidance for {name}:\n{notif_message}"
                 )
 
             # 5. ML Adherence Risk Evaluation & Personalization
@@ -168,6 +175,7 @@ def create_medicine():
                 "normalized_name": str(med_info.get("normalized_name", name)),
                 "rxcui": str(med_info.get("rxcui")) if med_info.get("rxcui") else None
             },
+            "medication_info": med_info.get("medication_info"),
             "alerts": alerts,
             "guidance": guidance,
             "ml": {
@@ -189,12 +197,13 @@ def analyze_medication():
     patient_id = get_jwt_identity()
     data = request.get_json() or {}
     name = data.get('name', '').strip()
+    dosage = data.get('dosage', '').strip()
 
     if not name:
         return jsonify({"success": False, "message": "Medicine name is required"}), 400
 
     try:
-        med_info = get_medication_info(name)
+        med_info = get_medication_info(name, dosage=dosage)
         profile = PatientModel.get_profile(patient_id)
         user_allergies = ""
         if profile and isinstance(profile.get("medical_information"), dict):
@@ -221,6 +230,7 @@ def analyze_medication():
                 "ingredients": med_info.get("ingredients", [name]),
                 "drug_class": med_info.get("drug_class")
             },
+            "medication_info": med_info.get("medication_info"),
             "alerts": alerts,
             "guidance": guidance,
             "ml": {
@@ -339,12 +349,21 @@ def log_compliance(medicine_id):
     except ValueError as e:
         return jsonify({"success": False, "message": str(e)}), 400
 
+    scheduled_time = data.get("scheduled_time")
+    delay_minutes = data.get("delay_minutes")
+    response_time_seconds = data.get("response_time_seconds")
+    time_bucket = data.get("time_bucket")
+
     success = MedicineModel.add_log(
         medicine_id=medicine_id,
         patient_id=patient_id,
         date=date_str,
         time=time_str,
-        status=status
+        status=status,
+        scheduled_time=scheduled_time,
+        delay_minutes=delay_minutes,
+        response_time_seconds=response_time_seconds,
+        time_bucket=time_bucket
     )
 
     if not success:

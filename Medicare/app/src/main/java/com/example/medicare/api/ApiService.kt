@@ -67,4 +67,11 @@ interface ApiService {
     // ML Adherence endpoint
     @GET("ml/adherence")
     fun getAdherence(): Call<MlAdherenceResponse>
+
+    // Predictive Intelligence & ML Enhancement endpoints
+    @GET("ml/insights")
+    fun getPredictiveInsights(): Call<PredictiveInsightsResponse>
+
+    @POST("ml/reminders/accept-suggestion")
+    fun acceptReminderSuggestion(@Body request: AcceptReminderSuggestionRequest): Call<BaseResponse>
 }

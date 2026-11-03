@@ -134,7 +134,8 @@ data class MedicineResponse(
     val medication: MedicationConcept? = null,
     val alerts: List<MedicationAlert>? = null,
     val guidance: List<MedicationGuidance>? = null,
-    val ml: MlAdherence? = null
+    val ml: MlAdherence? = null,
+    @SerializedName("medication_info") val medicationInfo: MedicationInfo? = null
 )
 
 // AI Assistant DTOs
@@ -184,8 +185,21 @@ data class MlAdherence(
     val priority: String? = null
 )
 
+data class MedicationInfo(
+    val medicine: String? = null,
+    val uses: List<String>? = null,
+    @SerializedName("common_side_effects") val commonSideEffects: List<String>? = null,
+    val precautions: List<String>? = null,
+    @SerializedName("supportive_recommendations") val supportiveRecommendations: List<String>? = null,
+    @SerializedName("dosage_evaluation") val dosageEvaluation: String? = null,
+    val source: String? = null,
+    @SerializedName("source_url") val sourceUrl: String? = null,
+    @SerializedName("source_updated") val sourceUpdated: String? = null
+)
+
 data class AnalyzeMedicationRequest(
-    val name: String
+    val name: String,
+    val dosage: String? = null
 )
 
 data class AnalyzeMedicationResponse(
@@ -194,6 +208,7 @@ data class AnalyzeMedicationResponse(
     val alerts: List<MedicationAlert>? = null,
     val guidance: List<MedicationGuidance>? = null,
     val ml: MlAdherence? = null,
+    @SerializedName("medication_info") val medicationInfo: MedicationInfo? = null,
     val message: String? = null
 )
 
@@ -285,3 +300,88 @@ data class GeoapifyContact(
     val phone: String? = null,
     val email: String? = null
 )
+
+// ==========================================
+// Predictive Intelligence & ML Enhancements
+// ==========================================
+
+data class PredictiveInsightsResponse(
+    val success: Boolean,
+    val insights: PredictiveInsightsData? = null,
+    val message: String? = null
+)
+
+data class PredictiveInsightsData(
+    val status: String,
+    @SerializedName("patient_id") val patientId: String? = null,
+    @SerializedName("total_active_medications") val totalActiveMedications: Int = 0,
+    @SerializedName("total_logged_doses") val totalLoggedDoses: Int = 0,
+    val disclaimer: String? = null,
+    val adherence: AdherenceInsightDto? = null,
+    val routine: RoutineInsightDto? = null,
+    @SerializedName("reminder_optimization") val reminderOptimization: ReminderOptimizationDto? = null
+)
+
+data class AdherenceInsightDto(
+    val status: String,
+    val message: String? = null,
+    @SerializedName("minimum_required_doses") val minimumRequiredDoses: Int = 5,
+    @SerializedName("current_logged_doses") val currentLoggedDoses: Int = 0,
+    @SerializedName("historical_adherence_pct") val historicalAdherencePct: Float = 0f,
+    @SerializedName("predicted_miss_probability") val predictedMissProbability: Float = 0f,
+    @SerializedName("risk_level") val riskLevel: String = "Low",
+    @SerializedName("confidence_score") val confidenceScore: Float = 0f,
+    @SerializedName("total_logged_doses") val totalLoggedDoses: Int = 0,
+    @SerializedName("missed_doses_total") val missedDosesTotal: Int = 0,
+    @SerializedName("delayed_doses_total") val delayedDosesTotal: Int = 0,
+    @SerializedName("contributing_factors") val contributingFactors: List<String> = emptyList()
+)
+
+data class RoutineBreakdownDto(
+    val morning: Float = 0f,
+    val afternoon: Float = 0f,
+    val evening: Float = 0f,
+    val weekend: Float = 0f
+)
+
+data class RoutineInsightDto(
+    val status: String,
+    val message: String? = null,
+    val archetype: String = "Establishing Baseline",
+    val description: String? = null,
+    @SerializedName("cluster_id") val clusterId: Int = -1,
+    @SerializedName("time_of_day_breakdown") val timeOfDayBreakdown: RoutineBreakdownDto? = null,
+    val recommendations: List<String> = emptyList()
+)
+
+data class ReminderSuggestionDto(
+    @SerializedName("suggestion_id") val suggestionId: String,
+    @SerializedName("medicine_id") val medicineId: String,
+    @SerializedName("medicine_name") val medicineName: String,
+    @SerializedName("current_reminder_time") val currentReminderTime: String,
+    @SerializedName("suggested_reminder_time") val suggestedReminderTime: String,
+    @SerializedName("delay_minutes_observed") val delayMinutesObserved: Float = 0f,
+    @SerializedName("predicted_delay_minutes") val predictedDelayMinutes: Float = 0f,
+    @SerializedName("shift_minutes") val shiftMinutes: Int = 0,
+    val rationale: String? = null,
+    val status: String = "pending_user_acceptance",
+    @SerializedName("safety_confirmation_required") val safetyConfirmationRequired: Boolean = true
+)
+
+data class ReminderOptimizationDto(
+    val status: String,
+    val message: String? = null,
+    @SerializedName("most_responsive_period") val mostResponsivePeriod: String = "Not enough data",
+    @SerializedName("least_responsive_period") val leastResponsivePeriod: String = "Not enough data",
+    @SerializedName("suggestions_count") val suggestionsCount: Int = 0,
+    val suggestions: List<ReminderSuggestionDto> = emptyList(),
+    @SerializedName("safety_notice") val safetyNotice: String? = null
+)
+
+data class AcceptReminderSuggestionRequest(
+    @SerializedName("medicine_id") val medicineId: String,
+    @SerializedName("current_reminder_time") val currentReminderTime: String,
+    @SerializedName("suggested_reminder_time") val suggestedReminderTime: String,
+    @SerializedName("confirmed_by_user") val confirmedByUser: Boolean = true
+)
+

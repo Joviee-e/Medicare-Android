@@ -66,6 +66,9 @@
             android:name=".ProfileActivity"
             android:exported="false"/>
         <activity
+            android:name=".InsightsActivity"
+            android:exported="false"/>
+        <activity
             android:name=".ReminderAlarmActivity"
             android:exported="false"
             android:showWhenLocked="true"

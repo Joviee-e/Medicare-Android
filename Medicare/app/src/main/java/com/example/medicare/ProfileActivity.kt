@@ -1,4 +1,4 @@
-﻿package com.example.medicare
+package com.example.medicare
 
 import android.app.DatePickerDialog
 import android.content.Intent
@@ -160,6 +160,11 @@ class ProfileActivity : BaseActivity() {
                     logoutUser()
                 }
                 .show()
+        }
+
+        findViewById<View>(R.id.row_predictive_insights)?.setOnClickListener {
+            val intent = Intent(this, InsightsActivity::class.java)
+            startActivity(intent)
         }
 
         findViewById<View>(R.id.row_export_data)?.setOnClickListener {

@@ -1,0 +1,172 @@
+{
+  "timestamp": "2026-11-03T05:14:02.289558+00:00",
+  "disclaimer": "Models were trained and evaluated on synthetic patient behavioral histories modeled from clinical pharmacotherapy adherence literature. Results do not substitute clinical diagnostic validation.",
+  "adherence_prediction": {
+    "model_file": "adherence_classifier.joblib",
+    "algorithm": "RandomForestClassifier",
+    "n_estimators": 120,
+    "max_depth": 7,
+    "n_train_samples": 1120,
+    "n_test_samples": 280,
+    "accuracy": 1.0,
+    "precision_macro": 1.0,
+    "precision_weighted": 1.0,
+    "recall_macro": 1.0,
+    "recall_weighted": 1.0,
+    "f1_macro": 1.0,
+    "f1_weighted": 1.0,
+    "confusion_matrix": [
+      [
+        109,
+        0,
+        0
+      ],
+      [
+        0,
+        104,
+        0
+      ],
+      [
+        0,
+        0,
+        67
+      ]
+    ],
+    "feature_importances": {
+      "historical_adherence_pct": 0.328,
+      "missed_doses_total": 0.0059,
+      "delayed_doses_total": 0.0198,
+      "avg_delay_minutes": 0.1432,
+      "reminder_response_latency_sec": 0.1602,
+      "morning_adherence_pct": 0.0208,
+      "afternoon_adherence_pct": 0.0424,
+      "evening_adherence_pct": 0.0507,
+      "weekend_adherence_pct": 0.1162,
+      "recent_missed_7d": 0.1128
+    },
+    "classification_report": {
+      "Low": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 109.0
+      },
+      "Moderate": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 104.0
+      },
+      "High": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 67.0
+      },
+      "accuracy": 1.0,
+      "macro avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 280.0
+      },
+      "weighted avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 280.0
+      }
+    }
+  },
+  "routine_clustering": {
+    "model_file": "routine_kmeans.joblib",
+    "scaler_file": "routine_scaler.joblib",
+    "algorithm": "KMeans",
+    "k_clusters": 4,
+    "silhouette_score": 0.5122,
+    "cluster_profiles": [
+      {
+        "cluster_id": 0,
+        "size": 293,
+        "overall_adherence": 70.19999694824219,
+        "morning": 90.0,
+        "afternoon": 77.30000305175781,
+        "evening": 59.70000076293945,
+        "weekend": 53.599998474121094,
+        "avg_delay": 44.400001525878906,
+        "missed_doses": 8.300000190734863,
+        "response_latency": 178.89999389648438,
+        "label": "Occasionally Delayed",
+        "description": "Doses are generally taken but frequently delayed or snoozed past the scheduled time."
+      },
+      {
+        "cluster_id": 1,
+        "size": 547,
+        "overall_adherence": 93.69999694824219,
+        "morning": 95.80000305175781,
+        "afternoon": 93.9000015258789,
+        "evening": 91.9000015258789,
+        "weekend": 93.19999694824219,
+        "avg_delay": 6.199999809265137,
+        "missed_doses": 1.5,
+        "response_latency": 25.0,
+        "label": "Consistent Routine",
+        "description": "High adherence across all dose times with prompt reminder responses and minimal delay."
+      },
+      {
+        "cluster_id": 2,
+        "size": 212,
+        "overall_adherence": 47.70000076293945,
+        "morning": 61.70000076293945,
+        "afternoon": 48.0,
+        "evening": 42.29999923706055,
+        "weekend": 38.599998474121094,
+        "avg_delay": 70.5,
+        "missed_doses": 15.800000190734863,
+        "response_latency": 320.3999938964844,
+        "label": "Frequently Missed Doses",
+        "description": "Noticeable adherence challenges across morning, afternoon, and evening schedules with higher miss rates."
+      },
+      {
+        "cluster_id": 3,
+        "size": 348,
+        "overall_adherence": 79.19999694824219,
+        "morning": 87.5999984741211,
+        "afternoon": 72.30000305175781,
+        "evening": 81.0999984741211,
+        "weekend": 75.9000015258789,
+        "avg_delay": 38.70000076293945,
+        "missed_doses": 4.599999904632568,
+        "response_latency": 141.8000030517578,
+        "label": "Irregular Routine / Weekend Drop-off",
+        "description": "Consistent on weekday mornings, but adherence drops significantly during evenings and weekends."
+      }
+    ],
+    "cluster_mapping": {
+      "1": {
+        "title": "Consistent Routine",
+        "description": "High adherence across all dose times with prompt reminder responses and minimal delay."
+      },
+      "2": {
+        "title": "Frequently Missed Doses",
+        "description": "Noticeable adherence challenges across morning, afternoon, and evening schedules with higher miss rates."
+      },
+      "0": {
+        "title": "Occasionally Delayed",
+        "description": "Doses are generally taken but frequently delayed or snoozed past the scheduled time."
+      },
+      "3": {
+        "title": "Irregular Routine / Weekend Drop-off",
+        "description": "Consistent on weekday mornings, but adherence drops significantly during evenings and weekends."
+      }
+    }
+  },
+  "reminder_optimization": {
+    "model_file": "reminder_optimizer.joblib",
+    "algorithm": "RandomForestRegressor",
+    "n_estimators": 100,
+    "max_depth": 6,
+    "mean_absolute_error_minutes": 7.33,
+    "r2_score": 0.7537
+  }
+}

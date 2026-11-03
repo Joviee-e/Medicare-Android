@@ -294,11 +294,98 @@ def check_drug_interactions(new_med_info: dict, existing_medicines: list) -> Lis
 
 def extract_medication_guidance(medication_info: dict) -> List[dict]:
     """
-    Extracts verified administration guidelines and precautions from openFDA label data.
+    Extracts verified administration guidelines and precautions from openFDA label data,
+    or from Gemini fallback data when openFDA found nothing.
     Strictly avoids inventing non-factual lifestyle tips.
     """
     guidance = []
     label_info = medication_info.get("label_information", {})
+    source_info = medication_info.get("source", {})
+    is_web_fallback = source_info.get("web_fallback", False) or (source_info.get("gemini_fallback", False) and not source_info.get("openfda", False))
+    med_struct = medication_info.get("medication_info", {})
+
+    # ── Layer 2 Web fallback path: surface verified uses, administration, supportive care & precautions ──
+    if is_web_fallback:
+        uses = med_struct.get("uses") or medication_info.get("_gemini_uses", [])
+        supportive = med_struct.get("supportive_recommendations") or medication_info.get("_gemini_supportive_care", [])
+        source_name = med_struct.get("source", "Authoritative Reference (NHS / MedlinePlus / FDA)")
+
+        if uses:
+            guidance.append({
+                "type": "information",
+                "category": "common_use",
+                "message": "Common uses: " + "; ".join(uses) + ".",
+                "source": source_name
+            })
+
+        admin_notes = label_info.get("administration", [])
+        for note in admin_notes[:2]:
+            if note and note.strip():
+                guidance.append({
+                    "type": "administration",
+                    "category": "administration",
+                    "message": f"Administration: {note.strip()}",
+                    "source": source_name
+                })
+
+        for tip in supportive:
+            if tip and tip.strip():
+                guidance.append({
+                    "type": "supportive_care",
+                    "category": "self_care",
+                    "message": f"Supportive care: {tip.strip()}",
+                    "source": source_name
+                })
+
+        # Dosage evaluation note (if present)
+        dosage_note = med_struct.get("dosage_evaluation")
+        if dosage_note and dosage_note.strip():
+            guidance.append({
+                "type": "precaution",
+                "category": "dosage",
+                "message": dosage_note.strip(),
+                "source": source_name
+            })
+
+        # Key precautions
+        precautions = label_info.get("precautions", [])
+        for p in precautions[:2]:
+            if p and p.strip() and p != dosage_note:
+                guidance.append({
+                    "type": "precaution",
+                    "category": "precaution",
+                    "message": f"Precaution: {p.strip()}",
+                    "source": source_name
+                })
+
+        # Adverse reactions
+        adverse = label_info.get("adverse_reactions", []) or med_struct.get("common_side_effects", [])
+        if adverse:
+            guidance.append({
+                "type": "information",
+                "category": "side_effects",
+                "message": "Common side effects may include: " + "; ".join(adverse[:3]) + ". Contact your doctor if any side effect is severe or persistent.",
+                "source": source_name
+            })
+
+        guidance.append({
+            "type": "disclaimer",
+            "category": "disclaimer",
+            "message": "This information is general medication information from authoritative references and does not replace advice from a doctor or pharmacist.",
+            "source": source_name
+        })
+
+        return guidance
+
+    # ── Layer 1 Standard openFDA path ──
+    dosage_note = med_struct.get("dosage_evaluation")
+    if dosage_note and dosage_note.strip():
+        guidance.append({
+            "type": "precaution",
+            "category": "dosage",
+            "message": dosage_note.strip(),
+            "source": "openfda_label"
+        })
 
     # 1. Administration instructions
     admin_texts = label_info.get("administration", [])

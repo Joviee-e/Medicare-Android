@@ -91,8 +91,8 @@ class MedicineModel:
             return False
 
     @staticmethod
-    def add_log(medicine_id: str, patient_id: str, date: str, time: str, status: str) -> bool:
-        """Add a dose compliance log. Ensures correct patient ownership."""
+    def add_log(medicine_id: str, patient_id: str, date: str, time: str, status: str, **kwargs) -> bool:
+        """Add a dose compliance log. Ensures correct patient ownership and stores optional telemetry."""
         medicines_col = get_medicines_collection()
         now = datetime.now(timezone.utc)
         log_entry = {
@@ -101,6 +101,9 @@ class MedicineModel:
             "status": status, # "taken", "snoozed", "skipped", "missed"
             "logged_at": now
         }
+        for k, v in kwargs.items():
+            if v is not None and k not in log_entry:
+                log_entry[k] = v
         try:
             result = medicines_col.update_one(
                 {"_id": ObjectId(medicine_id), "patient_id": ObjectId(patient_id)},
