@@ -1,6 +1,7 @@
 package com.example.medicare
 
-import android.app.AlertDialog
+import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -10,10 +11,12 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import com.example.medicare.api.*
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -165,30 +168,31 @@ class InsightsActivity : BaseActivity() {
             val missPct = (adh.predictedMissProbability * 100f).toInt()
             txtPredictedMissProb.text = "$missPct%"
 
-            // Risk badge styling
+            // Clean high-contrast risk badge styling
             val riskUpper = adh.riskLevel.uppercase()
             txtRiskBadge.text = "$riskUpper RISK"
             when (riskUpper) {
                 "LOW" -> {
-                    txtRiskBadge.setTextColor(ContextCompat.getColor(this, R.color.status_taken))
+                    txtRiskBadge.setTextColor(Color.parseColor("#2E7D32"))
+                    txtRiskBadge.setBackgroundResource(R.drawable.bg_badge_low_risk)
                 }
                 "MODERATE" -> {
-                    txtRiskBadge.setTextColor(ContextCompat.getColor(this, R.color.status_upcoming))
+                    txtRiskBadge.setTextColor(Color.parseColor("#E65100"))
+                    txtRiskBadge.setBackgroundResource(R.drawable.bg_badge_moderate_risk)
                 }
                 else -> {
-                    txtRiskBadge.setTextColor(ContextCompat.getColor(this, R.color.status_missed))
+                    txtRiskBadge.setTextColor(Color.parseColor("#C62828"))
+                    txtRiskBadge.setBackgroundResource(R.drawable.bg_badge_high_risk)
                 }
             }
 
-            // Contributing factors bullets
+            // Contributing factors bullets with clean styled views
             layoutContributingFactors.removeAllViews()
             if (adh.contributingFactors.isEmpty()) {
-                val tv = createBulletTextView("Consistent dose timing observed across daily schedule")
-                layoutContributingFactors.addView(tv)
+                layoutContributingFactors.addView(createBulletView("Consistent dose timing observed across daily schedule"))
             } else {
                 for (factor in adh.contributingFactors) {
-                    val tv = createBulletTextView(factor)
-                    layoutContributingFactors.addView(tv)
+                    layoutContributingFactors.addView(createBulletView(factor))
                 }
             }
         }
@@ -196,6 +200,8 @@ class InsightsActivity : BaseActivity() {
         // 2. Routine Analysis
         insights.routine?.let { routine ->
             txtArchetypeBadge.text = routine.archetype
+            txtArchetypeBadge.setTextColor(ContextCompat.getColor(this, R.color.primary))
+            txtArchetypeBadge.setBackgroundResource(R.drawable.bg_badge_primary_soft)
             txtArchetypeDescription.text = routine.description ?: "Daily routine pattern based on dose adherence and timing delay."
 
             routine.timeOfDayBreakdown?.let { b ->
@@ -218,12 +224,10 @@ class InsightsActivity : BaseActivity() {
 
             layoutRoutineRecommendations.removeAllViews()
             if (routine.recommendations.isEmpty()) {
-                val tv = createBulletTextView("Continue taking your medications according to your current schedule.")
-                layoutRoutineRecommendations.addView(tv)
+                layoutRoutineRecommendations.addView(createBulletView("Continue taking your medications according to your current schedule."))
             } else {
                 for (rec in routine.recommendations) {
-                    val tv = createBulletTextView(rec)
-                    layoutRoutineRecommendations.addView(tv)
+                    layoutRoutineRecommendations.addView(createBulletView(rec))
                 }
             }
         }
@@ -254,8 +258,15 @@ class InsightsActivity : BaseActivity() {
 
                     txtMedName.text = sug.medicineName
                     txtShiftBadge.text = "+${sug.shiftMinutes} min"
+                    txtShiftBadge.setTextColor(ContextCompat.getColor(this, R.color.primary))
+                    txtShiftBadge.setBackgroundResource(R.drawable.bg_badge_primary_soft)
+
                     txtCurrentTime.text = sug.currentReminderTime
+                    txtCurrentTime.setBackgroundResource(R.drawable.bg_time_chip_current)
+
                     txtSuggestedTime.text = sug.suggestedReminderTime
+                    txtSuggestedTime.setBackgroundResource(R.drawable.bg_time_chip_suggested)
+
                     txtRationale.text = sug.rationale ?: "Recommended adjustment based on your typical dose time delay."
 
                     btnAccept.setOnClickListener {
@@ -273,7 +284,7 @@ class InsightsActivity : BaseActivity() {
     }
 
     private fun confirmAndApplySuggestion(suggestion: ReminderSuggestionDto) {
-        AlertDialog.Builder(this)
+        val dialog = MaterialAlertDialogBuilder(this)
             .setTitle("Confirm Reminder Adjustment")
             .setMessage("Would you like to shift your ${suggestion.medicineName} reminder from ${suggestion.currentReminderTime} to ${suggestion.suggestedReminderTime}?\n\n" +
                     "SAFETY NOTE: This will only adjust your app reminder notification alarm. Your prescribed dosage and frequency remain completely unchanged.")
@@ -281,7 +292,22 @@ class InsightsActivity : BaseActivity() {
                 sendAcceptanceRequest(suggestion)
             }
             .setNegativeButton("Cancel", null)
-            .show()
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.apply {
+                setTextColor(Color.parseColor("#004D60"))
+                typeface = Typeface.DEFAULT_BOLD
+                textSize = 14f
+            }
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.apply {
+                setTextColor(Color.parseColor("#5A6E78"))
+                typeface = Typeface.DEFAULT_BOLD
+                textSize = 14f
+            }
+        }
+
+        dialog.show()
     }
 
     private fun sendAcceptanceRequest(suggestion: ReminderSuggestionDto) {
@@ -313,15 +339,10 @@ class InsightsActivity : BaseActivity() {
         })
     }
 
-    private fun createBulletTextView(text: String): TextView {
-        val tv = TextView(this)
-        tv.text = "•  $text"
-        tv.textSize = 13f
-        tv.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
-        tv.setLineSpacing(4f, 1f)
-        val padVer = (3 * resources.displayMetrics.density).toInt()
-        tv.setPadding(0, padVer, 0, padVer)
-        return tv
+    private fun createBulletView(text: String): View {
+        val view = LayoutInflater.from(this).inflate(R.layout.item_insight_bullet, null, false)
+        val tv = view.findViewById<TextView>(R.id.txt_bullet_content)
+        tv.text = text
+        return view
     }
 }
-
